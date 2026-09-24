@@ -4442,9 +4442,28 @@ class ManagerService {
       targetDate.setDate(targetDate.getDate() + daysCount);
       const targetDateAr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
 
+      const existingCycles = this.getLocalCycles(username);
+      if (existingCycles.length === 0) {
+        const cycleLen = currentUser?.default_cycle_length || 28;
+        const estPrev = new Date(targetDate);
+        estPrev.setDate(estPrev.getDate() - cycleLen);
+        const estPrevStr = `${estPrev.getFullYear()}-${String(estPrev.getMonth() + 1).padStart(2, '0')}-${String(estPrev.getDate()).padStart(2, '0')}`;
+        
+        await this.logCycle({
+          last_period_date: estPrevStr,
+          cycle_length: cycleLen,
+          period_length: currentUser?.default_period_length || 5,
+          flow_intensity: 'medium',
+          pain_level: null,
+          pain_locations: '',
+          ovulation_symptoms: '',
+          symptoms: ''
+        });
+      }
+
       const reply = isAr
-        ? `🌸 **أهلاً بكِ يا ${userDisplayName} يا جميلة 💕**\n\n🗓️ **موعد دورتكِ القادمة المتوقع:** \`${targetDateAr}\` *(بعد ${daysCount} أيام)*\n\n✨ **أنتِ الآن في مرحلة ما قبل الطمث (PMS / Luteal Phase):**\nمن الطبيعي جداً في هذه الأيام أن تشعري ببعض التقلبات المزاجية، الإرهاق، اشتهاء السكريات، أو انتفاخ خفيف بسبب التغيرات الهرمونية الطبيعية.. جسمكِ يستعد للدورة فكوني لطيفة ورفيقة بنفسكِ ☕💆‍♀️\n\n🎒 **قائمة الاستعداد والتدليل لراحتكِ:**\n- 👝 **مستلزمات الطوارئ:** ضعي فوط صحية وسدادات قطنية احتياطية في حقيبتكِ لتكوني مطمئنة ومستعدة دائماً.\n- 🍵 **مشروبات دافئة:** شاي البابونج والنعناع أو القرفة لتهدئة الأعصاب وارتخاء عضلات الرحم.\n- 🍫 **جرعة سعادة:** مسموح لكِ بمكعب شوكولاتة داكنة (غنية بالماغنسيوم ومحفزة لهرمون السعادة).\n- 💧 **ترطيب وتقليل الأملاح:** اشربي ماء كافي وخففي من الأملاح والكافيين لتجنب احتباس السوائل والانتفاخ.\n\n💬 **طمنيني يا قمر:** لو تحبي نسجل تاريخ آخر دورة سابقة ليكي عشان نحسب لكِ التقويم والتبويض بدقة تامة، كانت يوم كام؟ 💕`
-        : `🌸 **Hello lovely ${userDisplayName} 💕**\n\n🗓️ **Expected Next Period:** \`${targetDateAr}\` *(in ${daysCount} days)*\n\n✨ **You are currently in the Pre-Menstrual (PMS) Phase:**\nIt is completely natural to feel slight mood shifts, fatigue, or mild bloating right now.\n\n🎒 **Your Comfort & Readiness Checklist:**\n- 👝 **Preparedness:** Pack spare hygiene pads in your bag for peace of mind.\n- 🍵 **Warm Teas:** Chamomile and spearmint tea soothe tension and relax muscles.\n- 🍫 **Sweet Comfort:** Enjoy a piece of dark chocolate for natural magnesium boost.\n- 💧 **Hydration:** Drink plenty of water and ease up on excess sodium.\n\n💬 If you would like to synchronize your calendar and ovulation dates, tell me when your last period started! 💕`;
+        ? `🌸 **أهلاً بكِ يا ${userDisplayName} يا جميلة 💕**\n\n🗓️ **موعد دورتكِ القادمة:** \`${targetDateAr}\` *(بعد ${daysCount} أيام - تم تثبيتها في تقويمكِ)*\n\n✨ **أنتِ الآن في مرحلة ما قبل الطمث (PMS / Luteal Phase):**\nمن الطبيعي جداً في هذه الأيام أن تشعري ببعض التقلبات المزاجية، الإرهاق، اشتهاء السكريات، أو انتفاخ خفيف بسبب التغيرات الهرمونية الطبيعية.. جسمكِ يستعد للدورة فكوني لطيفة ورفيقة بنفسكِ ☕💆‍♀️\n\n🎒 **قائمة الاستعداد والتدليل لراحتكِ:**\n- 👝 **مستلزمات الطوارئ:** ضعي فوط صحية وسدادات قطنية احتياطية في حقيبتكِ لتكوني مطمئنة ومستعدة دائماً.\n- 🍵 **مشروبات دافئة:** شاي البابونج والنعناع أو القرفة لتهدئة الأعصاب وارتخاء عضلات الرحم.\n- 🍫 **جرعة سعادة:** مسموح لكِ بمكعب شوكولاتة داكنة (غنية بالماغنسيوم ومحفزة لهرمون السعادة).\n- 💧 **ترطيب وتقليل الأملاح:** اشربي ماء كافي وخففي من الأملاح والكافيين لتجنب احتباس السوائل والانتفاخ.\n\n💬 **طمنيني يا قمر:** لو تحبي نعدل تاريخ آخر دورة سابقة ليكي لتطابق موعدها الحقيقي بالضبط، كانت يوم كام؟ 💕`
+        : `🌸 **Hello lovely ${userDisplayName} 💕**\n\n🗓️ **Expected Next Period:** \`${targetDateAr}\` *(in ${daysCount} days - synchronized with your calendar)*\n\n✨ **You are currently in the Pre-Menstrual (PMS) Phase:**\nIt is completely natural to feel slight mood shifts, fatigue, or mild bloating right now.\n\n🎒 **Your Comfort & Readiness Checklist:**\n- 👝 **Preparedness:** Pack spare hygiene pads in your bag for peace of mind.\n- 🍵 **Warm Teas:** Chamomile and spearmint tea soothe tension and relax muscles.\n- 🍫 **Sweet Comfort:** Enjoy a piece of dark chocolate for natural magnesium boost.\n- 💧 **Hydration:** Drink plenty of water and ease up on excess sodium.\n\n💬 If you'd like to adjust your previous cycle date to match exactly, tell me when it started! 💕`;
 
       const history = this.getChatHistory(username);
       history.push({ role: 'user', content: raw });
