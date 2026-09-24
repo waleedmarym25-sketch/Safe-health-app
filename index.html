@@ -912,20 +912,36 @@
                 </div>
 
                 <div id="customAIFieldsContainer" style="display: none; flex-direction: column; gap: 12px; border: 1px dashed var(--primary); padding: 14px; border-radius: var(--radius-sm); background: var(--surface-hover);">
+                    <div style="font-size: 0.82rem; font-weight: 800; color: var(--text-primary);">⚡ اختاري مزود الذكاء الاصطناعي بنقرة واحدة (1-Click Presets):</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+                        <button type="button" class="btn-action" style="padding: 8px; font-size: 0.8rem; font-weight: 700; border-color: #10b981;" onclick="setAIPreset('groq')">
+                            ⚡ Groq (مجاني وسريع)
+                        </button>
+                        <button type="button" class="btn-action" style="padding: 8px; font-size: 0.8rem; font-weight: 700; border-color: #06b6d4;" onclick="setAIPreset('openai')">
+                            🤖 OpenAI (ChatGPT)
+                        </button>
+                        <button type="button" class="btn-action" style="padding: 8px; font-size: 0.8rem; font-weight: 700; border-color: #8b5cf6;" onclick="setAIPreset('openrouter')">
+                            🌐 OpenRouter (كافة النماذج)
+                        </button>
+                    </div>
+
+                    <div id="aiKeyHelperLink" style="font-size: 0.8rem; color: var(--primary); background: rgba(212, 154, 91, 0.1); padding: 8px 10px; border-radius: 6px;">
+                        <a href="https://console.groq.com/keys" target="_blank" style="color: var(--primary); font-weight: bold; text-decoration: underline;">👉 اضغطي هنا للحصول على مفتاح مجاني من Groq في 30 ثانية بدون أي دفع</a>
+                    </div>
+
                     <div class="form-group">
                         <label data-i18n="aiApiKeyLabel">مفتاح الـ API الخاص بكِ (API Key):</label>
-                        <input type="password" id="customApiKeyInput" class="form-control" placeholder="sk-proj-... أو gsk_... (يحفظ في متصفحكِ بأمان)">
+                        <input type="password" id="customApiKeyInput" class="form-control" placeholder="gsk_... أو sk-proj-... (يحفظ في متصفحكِ بأمان)">
                     </div>
 
                     <div class="form-group">
                         <label data-i18n="aiApiUrlLabel">رابط واجهة الـ API (Endpoint URL):</label>
-                        <input type="text" id="customApiUrlInput" class="form-control" placeholder="https://api.openai.com/v1/chat/completions">
-                        <span style="font-size: 0.74rem; color: var(--text-secondary);">أمثلة: OpenAI (<code>https://api.openai.com/v1/chat/completions</code>) أو Groq (<code>https://api.groq.com/openai/v1/chat/completions</code>)</span>
+                        <input type="text" id="customApiUrlInput" class="form-control" placeholder="https://api.groq.com/openai/v1/chat/completions">
                     </div>
 
                     <div class="form-group">
                         <label data-i18n="aiModelLabel">اسم النموذج (Model Name):</label>
-                        <input type="text" id="customApiModelInput" class="form-control" placeholder="gpt-4o-mini أو gpt-4o أو llama-3.3-70b-versatile">
+                        <input type="text" id="customApiModelInput" class="form-control" placeholder="llama-3.3-70b-versatile أو gpt-4o-mini">
                     </div>
 
                     <div style="display: flex; gap: 8px;">
@@ -4271,55 +4287,76 @@ class ManagerService {
     const history = this.getChatHistory(username);
     const updatedHistory = [...history, { role: 'user', content: userMessage }];
 
-    // 1. Generate local high-quality authentic response
-    const localReply = this.generateLocalFallbackReply(userMessage, lang, userDisplayName, analytics, history);
-    
-    // Check if custom AI key is configured
-    let customKey = null;
-    let customUrl = 'https://api.openai.com/v1/chat/completions';
-    let customModel = 'gpt-4o-mini';
-    if (typeof window !== 'undefined' && window.localStorage) {
-      customKey = localStorage.getItem('safe_custom_ai_key');
-      customUrl = localStorage.getItem('safe_custom_ai_url') || 'https://api.openai.com/v1/chat/completions';
-      customModel = localStorage.getItem('safe_custom_ai_model') || 'gpt-4o-mini';
-    }
-
     let aiReply = null;
 
-    // If custom key is provided by user, call the real cloud API (GPT-4o, Groq, OpenRouter, etc.)
-    if (customKey && customKey.trim()) {
-      try {
-        const systemPrompt = isAr
-          ? `أنتِ "سارة" (Sarah)، رفيقة ذكية حنونة ومتخصصة في صحة المرأة والأنوثة والدعم النفسي لمنصة SAFE. تحدثي بلهجة دافئة مريحة وذكية كصديقة مقربة وطبيبة ناصحة في نفس الوقت. الاسم الحالي للمستخدمة: ${userDisplayName}. أجيبي عن أي موضوع يُطرح عليكِ برقي واهتمام واستخدمي التنسيق والإيموجي المناسب.`
-          : `You are Sarah, an empathetic, highly intelligent AI health companion and supportive best friend for SAFE Platform. You speak with warmth, scientific accuracy, and deep empathy. The user's name is ${userDisplayName}.`;
-
-        const res = await fetch(customUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${customKey.trim()}`
-          },
-          body: JSON.stringify({
-            model: customModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...updatedHistory.slice(-10)
-            ],
-            temperature: 0.7
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          aiReply = data?.choices?.[0]?.message?.content;
+    // 1. Try Vercel Serverless Backend AI Proxy (/api/chat)
+    try {
+      const serverlessRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          history: history.slice(-10),
+          userDisplayName,
+          lang,
+          analytics
+        })
+      });
+      if (serverlessRes.ok) {
+        const serverlessData = await serverlessRes.json();
+        if (serverlessData && serverlessData.success && serverlessData.ai_reply) {
+          aiReply = serverlessData.ai_reply;
         }
-      } catch (e) {
-        console.warn('Custom AI endpoint call failed, falling back to built-in Sarah engine:', e);
+      }
+    } catch (e) {
+      // Serverless not reachable (e.g. offline/local static file)
+    }
+
+    // 2. Try Client-side Custom AI key (if entered by user in modal)
+    if (!aiReply) {
+      let customKey = null;
+      let customUrl = 'https://api.openai.com/v1/chat/completions';
+      let customModel = 'gpt-4o-mini';
+      if (typeof window !== 'undefined' && window.localStorage) {
+        customKey = localStorage.getItem('safe_custom_ai_key');
+        customUrl = localStorage.getItem('safe_custom_ai_url') || 'https://api.openai.com/v1/chat/completions';
+        customModel = localStorage.getItem('safe_custom_ai_model') || 'gpt-4o-mini';
+      }
+
+      if (customKey && customKey.trim()) {
+        try {
+          const systemPrompt = isAr
+            ? `أنتِ "سارة" (Sarah) 💕، رفيقة ذكية حنونة واستشارية متخصصة في صحة المرأة والأنوثة والدعم النفسي لمنصة SAFE Health. اسم المستخدمة: "${userDisplayName}". تحدثي بلهجة دافئة ذكية ومريحة جداً كصديقة مقربة وطبيبة ناصحة في نفس الوقت. فكري في كل كلمة بعمق وتجاوبي مع كل تفاصيل رسالتها بمشاعر حقيقية ونصائح دقيقة وإيموجي لطيفة.`
+            : `You are Sarah 💕, an empathetic, highly intelligent AI health companion and supportive best friend for SAFE Platform. The user's name is ${userDisplayName}.`;
+
+          const res = await fetch(customUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${customKey.trim()}`
+            },
+            body: JSON.stringify({
+              model: customModel,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                ...updatedHistory.slice(-10)
+              ],
+              temperature: 0.7
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            aiReply = data?.choices?.[0]?.message?.content;
+          }
+        } catch (e) {
+          console.warn('Custom AI endpoint call failed:', e);
+        }
       }
     }
 
-    // If no custom key or if API call failed, use our comprehensive built-in engine response
+    // 3. Fallback to comprehensive built-in local engine
     if (!aiReply) {
-      aiReply = localReply;
+      aiReply = this.generateLocalFallbackReply(userMessage, lang, userDisplayName, analytics, history);
     }
 
     if (aiReply) {
@@ -5693,6 +5730,36 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                 container.style.display = 'flex';
             } else {
                 container.style.display = 'none';
+            }
+        };
+
+        window.setAIPreset = function(provider) {
+            const keyInput = document.getElementById('customApiKeyInput');
+            const urlInput = document.getElementById('customApiUrlInput');
+            const modelInput = document.getElementById('customApiModelInput');
+            const helperLink = document.getElementById('aiKeyHelperLink');
+
+            if (provider === 'groq') {
+                if (urlInput) urlInput.value = 'https://api.groq.com/openai/v1/chat/completions';
+                if (modelInput) modelInput.value = 'llama-3.3-70b-versatile';
+                if (keyInput) keyInput.placeholder = 'gsk_... (مفتاح مجاني من Groq)';
+                if (helperLink) {
+                    helperLink.innerHTML = `<a href="https://console.groq.com/keys" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:underline;">👉 اضغطي هنا لفتح Groq ونسخ المفتاح المجاني فوراً (سريع جداً ومجاني)</a>`;
+                }
+            } else if (provider === 'openai') {
+                if (urlInput) urlInput.value = 'https://api.openai.com/v1/chat/completions';
+                if (modelInput) modelInput.value = 'gpt-4o-mini';
+                if (keyInput) keyInput.placeholder = 'sk-proj-... (مفتاح OpenAI ChatGPT)';
+                if (helperLink) {
+                    helperLink.innerHTML = `<a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:underline;">👉 اضغطي هنا لفتح صفحة مفاتيح OpenAI (ChatGPT)</a>`;
+                }
+            } else if (provider === 'openrouter') {
+                if (urlInput) urlInput.value = 'https://openrouter.ai/api/v1/chat/completions';
+                if (modelInput) modelInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
+                if (keyInput) keyInput.placeholder = 'sk-or-v1-... (مفتاح OpenRouter)';
+                if (helperLink) {
+                    helperLink.innerHTML = `<a href="https://openrouter.ai/keys" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:underline;">👉 اضغطي هنا لإنشاء مفتاح مجاني من OpenRouter</a>`;
+                }
             }
         };
 
