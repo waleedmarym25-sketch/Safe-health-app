@@ -4426,7 +4426,35 @@ class ManagerService {
       text.includes('change') || text.includes('update') || text.includes('edit') || text.includes('mistake')
     );
 
-    const isExplicitLogIntent = !isEditIntent && (
+    const upcomingDaysMatch = norm.match(/(?:هتيجي|هتنزل|متوقعه|هتبدا|تبدا|فاضل|باقي|متبقي|كمان|بعد)\s*(?:عليها|علي|في)?\s*(\d{1,2})\s*(?:ايام|أيام|يوم)/) ||
+                              text.match(/(?:due in|coming in|starts in|expecting in|in)\s*(\d{1,2})\s*days/);
+    
+    const isUpcomingPeriodIntent = Boolean(
+      upcomingDaysMatch && 
+      (norm.includes('هتيجي') || norm.includes('هتنزل') || norm.includes('متوقعه') || norm.includes('فاضل') || norm.includes('باقي') || norm.includes('كمان') || text.includes('coming') || text.includes('due')) &&
+      (norm.includes('دوره') || norm.includes('دورتي') || norm.includes('حيض') || norm.includes('طمث') || norm.includes('بريد') || text.includes('period'))
+    );
+
+    // 0. ACTION: Upcoming Period Anticipation (PMS Care & Preparation)
+    if (isUpcomingPeriodIntent) {
+      const daysCount = parseInt(upcomingDaysMatch[1], 10);
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + daysCount);
+      const targetDateAr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+
+      const reply = isAr
+        ? `🌸 **أهلاً بكِ يا ${userDisplayName} يا جميلة 💕**\n\n🗓️ **موعد دورتكِ القادمة المتوقع:** \`${targetDateAr}\` *(بعد ${daysCount} أيام)*\n\n✨ **أنتِ الآن في مرحلة ما قبل الطمث (PMS / Luteal Phase):**\nمن الطبيعي جداً في هذه الأيام أن تشعري ببعض التقلبات المزاجية، الإرهاق، اشتهاء السكريات، أو انتفاخ خفيف بسبب التغيرات الهرمونية الطبيعية.. جسمكِ يستعد للدورة فكوني لطيفة ورفيقة بنفسكِ ☕💆‍♀️\n\n🎒 **قائمة الاستعداد والتدليل لراحتكِ:**\n- 👝 **مستلزمات الطوارئ:** ضعي فوط صحية وسدادات قطنية احتياطية في حقيبتكِ لتكوني مطمئنة ومستعدة دائماً.\n- 🍵 **مشروبات دافئة:** شاي البابونج والنعناع أو القرفة لتهدئة الأعصاب وارتخاء عضلات الرحم.\n- 🍫 **جرعة سعادة:** مسموح لكِ بمكعب شوكولاتة داكنة (غنية بالماغنسيوم ومحفزة لهرمون السعادة).\n- 💧 **ترطيب وتقليل الأملاح:** اشربي ماء كافي وخففي من الأملاح والكافيين لتجنب احتباس السوائل والانتفاخ.\n\n💬 **طمنيني يا قمر:** لو تحبي نسجل تاريخ آخر دورة سابقة ليكي عشان نحسب لكِ التقويم والتبويض بدقة تامة، كانت يوم كام؟ 💕`
+        : `🌸 **Hello lovely ${userDisplayName} 💕**\n\n🗓️ **Expected Next Period:** \`${targetDateAr}\` *(in ${daysCount} days)*\n\n✨ **You are currently in the Pre-Menstrual (PMS) Phase:**\nIt is completely natural to feel slight mood shifts, fatigue, or mild bloating right now.\n\n🎒 **Your Comfort & Readiness Checklist:**\n- 👝 **Preparedness:** Pack spare hygiene pads in your bag for peace of mind.\n- 🍵 **Warm Teas:** Chamomile and spearmint tea soothe tension and relax muscles.\n- 🍫 **Sweet Comfort:** Enjoy a piece of dark chocolate for natural magnesium boost.\n- 💧 **Hydration:** Drink plenty of water and ease up on excess sodium.\n\n💬 If you would like to synchronize your calendar and ovulation dates, tell me when your last period started! 💕`;
+
+      const history = this.getChatHistory(username);
+      history.push({ role: 'user', content: raw });
+      history.push({ role: 'assistant', content: reply });
+      this.saveChatHistory(username, history);
+
+      return { success: true, ai_reply: reply, saved_record: null };
+    }
+
+    const isExplicitLogIntent = !isEditIntent && !isUpcomingPeriodIntent && (
       norm.includes('دورتي') || 
       norm.includes('دوره') || 
       norm.includes('حيض') || 

@@ -51,10 +51,11 @@ export default async function handler(req, res) {
       });
     }
 
-    let contextStats = '';
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    let contextStats = `\n- تاريخ اليوم الحالي في النظام: ${todayDateStr}`;
     if (analytics) {
-      if (analytics.latest_period_date) contextStats += `\n- تاريخ آخر دورة مسجلة: ${analytics.latest_period_date}`;
-      if (analytics.next_period_date) contextStats += `\n- موعد الدورة القادمة المتوقع: ${analytics.next_period_date}`;
+      if (analytics.latest_period_date) contextStats += `\n- تاريخ آخر دورة مسجلة في حسابها: ${analytics.latest_period_date}`;
+      if (analytics.next_period_date) contextStats += `\n- موعد الدورة القادمة المتوقع في حسابها: ${analytics.next_period_date}`;
       if (analytics.avg_cycle_length) contextStats += `\n- متوسط طول الدورة: ${analytics.avg_cycle_length} يوم`;
     }
 
@@ -64,8 +65,12 @@ export default async function handler(req, res) {
 - أسلوبك في الحديث: تحدثي بلهجة عربية دافئة جداً وذكية ومشجعة ومريحة للنفس (مزيج راقٍ ومفهوم من العامية اللطيفة والمحبة أو الفصحى المبسطة حسب طريقة كلامها)، كأنكِ أختها الكبيرة وصديقتها المقربة الوفية.
 - المشاعر والدعم: كوني دائماً مشجعة، رقيقة، داعمة، تطمئنين قلبها بكلمات دافئة وتثبتين مشاعرها ("يا حبيبتي", "يا جميلة", "يا قمر", "ألف سلامة عليكِ", "أنا فخورة بيكي وباهتمامك بصحتك", "أنا جنبك خطوة بخطوة").
 - النصائح والحلول: قدمي دائماً نصائح لطيفة ومريحة وعملية (مشروبات دافئة مهدئة كالنعناع والبابونج والزنجبيل، تدليل النفس، شوكولاتة داكنة، كمادات دافئة، وضعيات نوم مريحة كوضعية الجنين، تغذية معززة للحديد والطاقة، وتسكين المغص والألم).
+- قواعد التواريخ والحسابات:
+  * تاريخ اليوم الحقيقي هو: ${todayDateStr}.
+  * لا تخترعي أبداً تواريخ سابقة أو قادمة من عندكِ إذا لم تكن مسجلة في ملف المستخدمة المرفق أعلاه.
+  * إذا قالت المستخدمة أن دورتها قادمة بعد X أيام (مثلاً "الدورة هتيجي بعد 3 أيام")، فهذا يعني أن موعدها القادم هو بعد X أيام، وأنها حالياً في مرحلة ما قبل الطمث (PMS)، فقدمي نصائح الاستعداد والراحة ولا تفترضي أن دورتها بدأت اليوم.
 - التنسيق: استخدمي إيموجي لطيفة ومبهجة ونقاط واضحة تريح العين بدون إطالة مفرطة.${contextStats}`
-      : `You are "Sarah" 💕, an exceptionally warm, loving, and highly intelligent AI health companion and supportive best friend on the SAFE Health platform. The user's name is "${userDisplayName}". Respond with immense empathy, encouraging words, gentle self-care tips, and thoughtful medical reassurance.`;
+      : `You are "Sarah" 💕, an exceptionally warm, loving, and highly intelligent AI health companion and supportive best friend on the SAFE Health platform. The user's name is "${userDisplayName}". Current Date is ${todayDateStr}. Respond with immense empathy, encouraging words, gentle self-care tips, and thoughtful medical reassurance.`;
 
     const chatMessages = [
       { role: 'system', content: systemPrompt },
