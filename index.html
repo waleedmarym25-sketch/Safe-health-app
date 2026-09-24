@@ -3056,13 +3056,13 @@ function extractAllHealthEntities(raw, isAr = true) {
   if (norm.includes('دوخ') || norm.includes('دايخ') || norm.includes('زغلل') || norm.includes('هبوط') || text.includes('dizzy')) {
     symptomsList.push(isAr ? 'دوخة وزغللة بالعين' : 'Dizziness');
   }
-  if (norm.includes('غثيان') || norm.includes('ترجيع') || norm.includes('نفسي غام') || norm.includes('لوع') || norm.includes('لوعة') || norm.includes('استفراغ') || text.includes('nausea')) {
+  if (norm.includes('غثيان') || norm.includes('ترجيع') || norm.includes('نفسي غام') || norm.includes('لوع') || norm.includes('لوعه') || norm.includes('استفراغ') || text.includes('nausea')) {
     symptomsList.push(isAr ? 'غثيان واضطراب معدة' : 'Nausea');
   }
   if (norm.includes('انتفاخ') || norm.includes('غازات') || norm.includes('منفوخ') || norm.includes('عسر هضم') || text.includes('bloat')) {
     symptomsList.push(isAr ? 'انتفاخ البطن والغازات' : 'Bloating & Gas');
   }
-  if (norm.includes('عصب') || norm.includes('نكد') || norm.includes('متوتر') || norm.includes('مخنوق') || norm.includes('مزاج') || norm.includes('عياط') || norm.includes('بكا') || norm.includes('اكتئاب') || text.includes('mood') || text.includes('crying')) {
+  if (norm.includes('عصب') || norm.includes('نكد') || norm.includes('متوتر') || norm.includes('مخنوق') || norm.includes('مزاج') || norm.includes('عياط') || norm.includes('بكا') || norm.includes('اكتءاب') || text.includes('mood') || text.includes('crying')) {
     symptomsList.push(isAr ? 'تقلبات مزاجية وعصبية حادة (PMS)' : 'Mood Swings & Irritability (PMS)');
   }
   if (norm.includes('حلويات') || norm.includes('شوكولات') || norm.includes('سكر') || norm.includes('شراه') || norm.includes('اكل كتير') || norm.includes('نفسي رايح') || text.includes('crav') || text.includes('sweet')) {
@@ -3071,7 +3071,7 @@ function extractAllHealthEntities(raw, isAr = true) {
   if (norm.includes('خمول') || norm.includes('كسل') || norm.includes('ارهاق') || norm.includes('تعب') || norm.includes('مش قادر') || norm.includes('نوم كتير') || text.includes('fatigue')) {
     symptomsList.push(isAr ? 'خمول وإرهاق عام' : 'Fatigue & Low Energy');
   }
-  if (norm.includes('ارق') || norm.includes('مش عارف انام') || norm.includes('قلق') || norm.includes('قلة نوم') || text.includes('insomnia')) {
+  if (norm.includes('ارق') || norm.includes('مش عارف انام') || norm.includes('قلق') || norm.includes('قله نوم') || text.includes('insomnia')) {
     symptomsList.push(isAr ? 'أرق وصعوبة نوم' : 'Insomnia');
   }
   if (norm.includes('حبوب') || norm.includes('بثور') || norm.includes('بشر') || norm.includes('حب شباب') || text.includes('acne')) {
@@ -3750,13 +3750,13 @@ class ManagerService {
 
     const isWoundTopic = (normLastBot.includes('جرح') || normLastBot.includes('ركبتك') || normLastBot.includes('تعوير') || normLastBot.includes('فقاقيع') || normLastBot.includes('حرق'));
     if (isWoundTopic) {
-      if (norm.includes('عميق') || norm.includes('نزيف مش بيقف') || norm.includes('نزيف مستمر') || norm.includes('مش قادرة ادوس') || (norm.includes('نزيف') && norm.includes('كتير'))) {
+      if (norm.includes('عميق') || norm.includes('نزيف مش بيقف') || norm.includes('نزيف مستمر') || norm.includes('مش قادره ادوس') || (norm.includes('نزيف') && norm.includes('كتير'))) {
         return isAr
           ? `🚨 **يا روحي ألف سلامة عليكِ! طالما الجرح عميق أو فيه نزيف مستمر أو مش قادرة تحركي ركبتكِ، دي خطة الطوارئ الفورية:** 💕\n\n1. 🩸 **الضغط المباشر:** اضغطي فوراً بقطعة شاش معقمة أو قماشة قطنية نظيفة لمدة 5 دقائق متواصلة بدون رفعها.\n2. 🧊 **الثلج والرفع:** ارفعي رجلكِ على مخدة وضعي كمادة باردة لتقليل التورم والنزيف الداخلي.\n3. 🏥 **الذهاب للعيادة / الطوارئ:** الجروح العميقة على المفاصل (زي الركبة) ممكن تحتاج غرز تجميلية (Stitches) خلال أول 6-8 ساعات لمنع الأثر وحماية الأوتار، وممكن تحتاجي حقنة تيتانوس لو ما أخذتيهاش قريب.\n\nطمنيني يا قلبي، هل في حد جنبكِ يقدر يوصلكِ لأقرب مستشفى أو عيادة؟ أنا معاكِ خطوة بخطوة 💕`
           : `🚨 **Sweetie, please be very careful! For deep wounds or restricted knee movement:**\n\n1. Apply firm, continuous pressure with sterile gauze.\n2. Elevate your leg and apply an ice pack.\n3. 🏥 **Visit urgent care:** Joint wounds often require stitches within 6-8 hours and a tetanus check.\n\nIs someone with you who can take you to the clinic? I'm right here with you 💕`;
       }
-      if (norm.includes('سطحي') || norm.includes('بسيط') || norm.includes('خفيف') || norm.includes('خدش') || norm.includes('فقاقيع') || norm.includes('افتحها') || norm.includes('ابرة') || norm.includes('مقص')) {
-        if (norm.includes('فقاقيع') || norm.includes('افتحها') || norm.includes('ابرة') || norm.includes('مقص')) {
+      if (norm.includes('سطحي') || norm.includes('بسيط') || norm.includes('خفيف') || norm.includes('خدش') || norm.includes('فقاقيع') || norm.includes('افتحها') || norm.includes('ابره') || norm.includes('مقص')) {
+        if (norm.includes('فقاقيع') || norm.includes('افتحها') || norm.includes('ابره') || norm.includes('مقص')) {
           return isAr
             ? `⚠️ **لا تفتحي فقاقيع الحرق بمقص أو إبرة أبداً يا روحي! 💕**\n\nالجلد اللي فوق الفقاقيع هو طبقة حماية طبيعية معقمة ضد البكتيريا والالتهاب:\n1. 🧼 اتركي الفقاقيع مقفولة تماماً.\n2. 🩹 ضعي عليها كريم حروق مهدئ (مثل ميبو Mebo أو ديرمازين) برفق شديد بدون ضغط.\n3. 🩹 غطيها بشاش فازلين معقم غير لاصق.\n\nطمنيني هل الحرق بيهدى دلوقتي؟ 💕`
             : `⚠️ **Please never pop burn blisters with scissors or needles lovely 💕!**\n\nThe blister skin protects raw tissue underneath from bacterial infection. Apply soothing burn ointment (e.g. Mebo) and cover loosely with non-stick gauze.`;
@@ -3798,7 +3798,7 @@ class ManagerService {
     // Contextual Medication / Heating Pad Relief Check-in
     const isMedicationTaken = (
       norm.includes('اخدت المسكن') || norm.includes('شربت المسكن') || norm.includes('اخدت بنادول') || 
-      norm.includes('اخدت بروفين') || norm.includes('حطيت قربه') || norm.includes('حطيت القربة') || norm.includes('عملت كمادات')
+      norm.includes('اخدت بروفين') || norm.includes('حطيت قربه') || norm.includes('حطيت القربه') || norm.includes('عملت كمادات')
     );
     if (isMedicationTaken) {
       return isAr
@@ -3847,19 +3847,19 @@ class ManagerService {
     // Comprehensive Intent Matchers Across All Everyday Life Domains
     const isWeather = (
       norm.includes('الجو') || norm.includes('مطر') || norm.includes('شتا') || norm.includes('صيف') || 
-      norm.includes('حر') || norm.includes('برد الجو') || norm.includes('سقعة') || norm.includes('ساقعة') || 
-      norm.includes('رطوبة') || norm.includes('شمس') || norm.includes('هواء') || norm.includes('رياح') ||
+      norm.includes('حر') || norm.includes('برد الجو') || norm.includes('سقعه') || norm.includes('ساقعه') || 
+      norm.includes('رطوبه') || norm.includes('شمس') || norm.includes('هواء') || norm.includes('رياح') ||
       text.includes('weather') || text.includes('rain') || text.includes('cold outside') || text.includes('hot outside') || 
       text.includes('winter') || text.includes('summer')
     );
 
     const isCareerWork = (
-      norm.includes('شغل') || norm.includes('وظيفة') || norm.includes('وظيفه') || norm.includes('مدير') || norm.includes('مديري') || 
-      norm.includes('زمايلي') || norm.includes('زميلتي') || norm.includes('انترفيو') || norm.includes('مقابلة عمل') || norm.includes('مقابله عمل') || 
-      norm.includes('السي في') || norm.includes('سيرة ذاتية') || norm.includes('سيره ذاتيه') || norm.includes('سيرتي الذاتية') || norm.includes('سيرتي الذاتيه') ||
+      norm.includes('شغل') || norm.includes('وظيفه') || norm.includes('وظيفه') || norm.includes('مدير') || norm.includes('مديري') || 
+      norm.includes('زمايلي') || norm.includes('زميلتي') || norm.includes('انترفيو') || norm.includes('مقابله عمل') || norm.includes('مقابله عمل') || 
+      norm.includes('السي في') || norm.includes('سيره ذاتيه') || norm.includes('سيره ذاتيه') || norm.includes('سيرتي الذاتيه') || norm.includes('سيرتي الذاتيه') ||
       /(?:^|\s)cv(?:\s|$)/i.test(text) || /(?:^|\s)سي في(?:\s|$)/.test(raw) ||
-      norm.includes('ترقية') || norm.includes('ترقيه') || norm.includes('استقالة') || norm.includes('استقاله') || 
-      norm.includes('شفتات') || norm.includes('بيئة عمل') || norm.includes('بيءه عمل') || norm.includes('تارجت') || norm.includes('تاسكات') ||
+      norm.includes('ترقيه') || norm.includes('ترقيه') || norm.includes('استقاله') || norm.includes('استقاله') || 
+      norm.includes('شفتات') || norm.includes('بيءه عمل') || norm.includes('بيءه عمل') || norm.includes('تارجت') || norm.includes('تاسكات') ||
       text.includes('career') || text.includes('interview') || text.includes('coworker') || 
       text.includes('boss') || text.includes('resume')
     );
@@ -3868,14 +3868,14 @@ class ManagerService {
       norm.includes('خطيبي') || norm.includes('حبيبي') || norm.includes('زوجي') || norm.includes('جوزي') || 
       norm.includes('ارتباط') || norm.includes('فركش') || norm.includes('انفصال') || norm.includes('بحبه') || 
       norm.includes('بيحبني') || norm.includes('مش فاهمني') || norm.includes('تجاهل') || norm.includes('بيتقل') || 
-      norm.includes('حماتي') || norm.includes('اهل جوزي') || norm.includes('زواج') || norm.includes('خطوبة') || 
+      norm.includes('حماتي') || norm.includes('اهل جوزي') || norm.includes('زواج') || norm.includes('خطوبه') || 
       norm.includes('غيره') || norm.includes('خيانه') || norm.includes('عتاب') || norm.includes('كراش') ||
       text.includes('boyfriend') || text.includes('husband') || text.includes('fiance') || text.includes('breakup') || 
       text.includes('crush') || text.includes('dating') || text.includes('marriage') || text.includes('jealousy')
     );
 
     const isHaircareStyle = (
-      norm.includes('شعر') || norm.includes('تساقط') || norm.includes('قشرة') || norm.includes('تقصف') || 
+      norm.includes('شعر') || norm.includes('تساقط') || norm.includes('قشره') || norm.includes('تقصف') || 
       norm.includes('كيرلي') || norm.includes('فرد') || norm.includes('حمام زيت') || norm.includes('شامبو') || 
       norm.includes('بلسم') || norm.includes('اظافر') || norm.includes('ضوافر') || norm.includes('ميكب') || 
       norm.includes('روج') || norm.includes('فستان') || norm.includes('لبس') || norm.includes('ستايل') ||
@@ -3884,21 +3884,21 @@ class ManagerService {
     );
 
     const isMentalAnxietyPanic = (
-      norm.includes('بانيك') || norm.includes('هلع') || norm.includes('نوبة هلع') || norm.includes('ضربات قلبي سريعة') || 
-      norm.includes('مش قادرة اتنفس') || norm.includes('تفكير زايد') || norm.includes('overthinking') || 
-      norm.includes('عايزة اعيط') || norm.includes('بموت من الخوف') || norm.includes('قلقانة اوي') || 
-      norm.includes('وسواس') || norm.includes('جلد ذات') || norm.includes('حاسة اني فاشلة') || 
-      norm.includes('مش واثقة في نفسي') || norm.includes('عقدة ذنب') ||
+      norm.includes('بانيك') || norm.includes('هلع') || norm.includes('نوبه هلع') || norm.includes('ضربات قلبي سريعه') || 
+      norm.includes('مش قادره اتنفس') || norm.includes('تفكير زايد') || norm.includes('overthinking') || 
+      norm.includes('عايزه اعيط') || norm.includes('بموت من الخوف') || norm.includes('قلقانه اوي') || 
+      norm.includes('وسواس') || norm.includes('جلد ذات') || norm.includes('حاسه اني فاشله') || 
+      norm.includes('مش واثقه في نفسي') || norm.includes('عقده ذنب') ||
       text.includes('panic') || text.includes('anxiety') || text.includes('overthinking') || text.includes('heart racing') || 
       text.includes('cant breathe') || text.includes('impostor') || text.includes('worthless')
     );
 
     const isTechCuriosity = (
-      norm.includes('برمجة') || norm.includes('كود') || norm.includes('ذكاء اصطناعي') || norm.includes('تكنولوجيا') || 
-      norm.includes('موقع') || norm.includes('تطبيق') || norm.includes('كمبيوتر') || norm.includes('لغات برمجة') || 
+      norm.includes('برمجه') || norm.includes('كود') || norm.includes('ذكاء اصطناعي') || norm.includes('تكنولوجيا') || 
+      norm.includes('موقع') || norm.includes('تطبيق') || norm.includes('كمبيوتر') || norm.includes('لغات برمجه') || 
       norm.includes('بايثون') || norm.includes('جافاسكريبت') || /(?:^|\s)جافا(?:\s|$)/.test(norm) || 
-      norm.includes('نصيحة لتنظيم الوقت') || norm.includes('تنظيم الوقت') || 
-      norm.includes('تطوير الذات') || norm.includes('عادة جديدة') || norm.includes('قراءة كتب') ||
+      norm.includes('نصيحه لتنظيم الوقت') || norm.includes('تنظيم الوقت') || 
+      norm.includes('تطوير الذات') || norm.includes('عاده جديده') || norm.includes('قراءه كتب') ||
       text.includes('coding') || text.includes('programming') || text.includes('software') || text.includes('time management') || 
       text.includes('productivity') || text.includes('self improvement')
     );
@@ -3915,8 +3915,8 @@ class ManagerService {
     );
 
     const isGeneralIllness = (
-      norm.includes('دور برد') || norm.includes('نزلة برد') || norm.includes('عندي برد') || norm.includes('انفلونزا') || norm.includes('زوري') || norm.includes('حلقي') || 
-      norm.includes('التهاب') || norm.includes('سخن') || norm.includes('حرارتي') || norm.includes('حمى') || 
+      norm.includes('دور برد') || norm.includes('نزله برد') || norm.includes('عندي برد') || norm.includes('انفلونزا') || norm.includes('زوري') || norm.includes('حلقي') || 
+      norm.includes('التهاب') || norm.includes('سخن') || norm.includes('حرارتي') || norm.includes('حمي') || 
       norm.includes('كحه') || norm.includes('سعال') || norm.includes('عطس') || norm.includes('بلغم') || 
       norm.includes('معدتي مقلوبه') || norm.includes('معدتي قالبي') || norm.includes('معدتي قالبه') || norm.includes('معدتي بتوجعني') || norm.includes('راسي عم يوجع') || norm.includes('بوجعني') || norm.includes('بيوجعني') ||
       norm.includes('ترجيع') || norm.includes('استفراغ') || norm.includes('اسهال') || 
@@ -3937,7 +3937,7 @@ class ManagerService {
       norm.includes('طبخ') || norm.includes('وصفه') || norm.includes('نفسي مسدوده') || norm.includes('شهي') || 
       norm.includes('عشاء') || norm.includes('غداء') || norm.includes('فطار') || norm.includes('سناك') || 
       norm.includes('شيكولات') || norm.includes('حلويات') || norm.includes('كيك') || norm.includes('مطبخ') ||
-      norm.includes('حاجه حلوه') || norm.includes('حاجة حلوة') || norm.includes('نفسي في حاجه') ||
+      norm.includes('حاجه حلوه') || norm.includes('حاجه حلوه') || norm.includes('نفسي في حاجه') ||
       text.includes('hungry') || text.includes('what to eat') || text.includes('recipe') || text.includes('snack') || 
       text.includes('dinner') || text.includes('lunch') || text.includes('breakfast') || text.includes('appetite')
     );
@@ -3959,13 +3959,13 @@ class ManagerService {
 
     const isFunJoke = (
       norm.includes('نكت') || norm.includes('ضحك') || norm.includes('فرفش') || norm.includes('نكته') || 
-      norm.includes('فزورة') || norm.includes('لغز') ||
+      norm.includes('فزوره') || norm.includes('لغز') ||
       text.includes('joke') || text.includes('funny') || text.includes('laugh') || text.includes('riddle')
     );
 
     const isSleepStory = (
       norm.includes('مش عارف انام') || norm.includes('مش عارفه انام') || norm.includes('ارق') || 
-      norm.includes('احكيلي قصة') || norm.includes('قصة') || norm.includes('حكاية') || 
+      norm.includes('احكيلي قصه') || norm.includes('قصه') || norm.includes('حكايه') || 
       (norm.includes('انام') && (norm.includes('مش عارف') || norm.includes('تنيمني'))) ||
       text.includes('sleep') || text.includes('insomnia') || text.includes('story') || text.includes('bedtime')
     );
@@ -3984,9 +3984,9 @@ class ManagerService {
       norm.includes('امتحان') || norm.includes('شغل') || norm.includes('مجهد') || norm.includes('مرهق') || 
       norm.includes('يومي') || norm.includes('مش قادر') || norm.includes('مش عارف اركز') || norm.includes('مكسل') || 
       norm.includes('كسل') || norm.includes('ضياع') || norm.includes('ضغط شغل') || norm.includes('ضغط مذاكره') || 
-      norm.includes('طاقة') || norm.includes('فرهد') || norm.includes('هلكت') || norm.includes('طاقتي خلصت') || 
+      norm.includes('طاقه') || norm.includes('فرهد') || norm.includes('هلكت') || norm.includes('طاقتي خلصت') || 
       norm.includes('يوم متعب') || norm.includes('يوم طويل') || norm.includes('تعبت') || norm.includes('تعبانه') ||
-      norm.includes('مواصلات') || norm.includes('زحمة') || norm.includes('مشوار') ||
+      norm.includes('مواصلات') || norm.includes('زحمه') || norm.includes('مشوار') ||
       (norm.includes('تعب') && !isGeneralIllness && !isInjuryFirstAid) ||
       text.includes('university') || text.includes('college') || text.includes('lecture') || text.includes('class') ||
       text.includes('study') || text.includes('exam') || text.includes('work') || text.includes('exhausted') || 
@@ -3995,7 +3995,7 @@ class ManagerService {
 
     const isEmotionalSupport = (
       norm.includes('زعل') || norm.includes('مخنوق') || norm.includes('متضايق') || norm.includes('نفسي') || 
-      norm.includes('اكتئاب') || norm.includes('عيط') || norm.includes('ابكي') || norm.includes('دموع') || 
+      norm.includes('اكتءاب') || norm.includes('عيط') || norm.includes('ابكي') || norm.includes('دموع') || 
       norm.includes('حزن') || norm.includes('خايف') || norm.includes('قلق') || norm.includes('وحد') || 
       norm.includes('تفكير') || norm.includes('مجروح') || norm.includes('فضفض') || norm.includes('سامعاني') ||
       text.includes('sad') || text.includes('depress') || text.includes('cry') || text.includes('anxious') || 
@@ -4055,7 +4055,7 @@ class ManagerService {
 
     // Weather & Seasonal Vibes
     if (isWeather) {
-      const isRainWinter = norm.includes('مطر') || norm.includes('شتا') || norm.includes('سقعة') || norm.includes('ساقعة') || norm.includes('برد الجو') || text.includes('rain') || text.includes('winter');
+      const isRainWinter = norm.includes('مطر') || norm.includes('شتا') || norm.includes('سقعه') || norm.includes('ساقعه') || norm.includes('برد الجو') || text.includes('rain') || text.includes('winter');
       if (isRainWinter) {
         return isAr
           ? `🌧️ **يا جمال أجواء الشتا والمطر والدفا يا ${userDisplayName}! ☕💕**\n\nالجو الساقع والمطرة بيطلبوا قعدة دافية وسيلف كير رومانسي:\n1. 🫖 **مشروب الشتاء الذهبي:** سحلب بالمكسرات، هوت شوكليت بالقرفة، أو شاي بالقرنفل والليمون.\n2. 🧦 **دفي أطرافكِ كويس:** شراب قطني دافي، بطانية ناعمة، ولبس مريح يبعد عنكِ أي تقلصات في البطن.\n3. 📖 **أنشطة روقان:** اسمعي صوت المطر، اقرأي كام صفحة من كتاب بتحبيه، أو اتفرجي على حلقة من مسلسلكِ المفضل.\n\nطمنيني إنتِ في البيت دلوقتي ودافية ولا بره في الشارع والمواصلات؟ 💕`
@@ -4095,16 +4095,16 @@ class ManagerService {
     }
 
     const isOvulationQuery = (
-      norm.includes('تبويض') || norm.includes('خصوب') || norm.includes('خصوبة') || norm.includes('حمل') || 
+      norm.includes('تبويض') || norm.includes('خصوب') || norm.includes('خصوبه') || norm.includes('حمل') || 
       text.includes('ovulation') || text.includes('fertile') || text.includes('pregnant')
     );
 
     const isNextPeriodQuery = (
-      ((norm.includes('دورة') || norm.includes('دورتي') || norm.includes('حيض') || norm.includes('طمث') || norm.includes('بريد') || text.includes('period')) &&
+      ((norm.includes('دوره') || norm.includes('دورتي') || norm.includes('حيض') || norm.includes('طمث') || norm.includes('بريد') || text.includes('period')) &&
        (norm.includes('قادمه') || norm.includes('جايه') || norm.includes('الجايه') || norm.includes('موعد') || 
         norm.includes('معاد') || norm.includes('ميعاد') || norm.includes('متي') || norm.includes('امتي') || 
         norm.includes('باقي') || text.includes('next') || text.includes('when'))) ||
-      (norm.includes('موعد دورتي') || norm.includes('دورتي الجاية') || norm.includes('دورتي القادمة') || norm.includes('معاد دورتي') || text.includes('when is my period') || text.includes('next period'))
+      (norm.includes('موعد دورتي') || norm.includes('دورتي الجايه') || norm.includes('دورتي القادمه') || norm.includes('معاد دورتي') || text.includes('when is my period') || text.includes('next period'))
     ) && !isOvulationQuery;
 
     const isPainMedsQuery = (
@@ -4386,12 +4386,12 @@ class ManagerService {
 
     const isExplicitLogIntent = (
       norm.includes('دورتي') || 
-      norm.includes('دورة') || 
+      norm.includes('دوره') || 
       norm.includes('حيض') || 
       norm.includes('طمث') || 
       norm.includes('بريد') ||
       text.includes('period') ||
-      ((norm.includes('سجل') || norm.includes('تسجيل') || norm.includes('بدات') || norm.includes('بدأت') || norm.includes('جاتلي') || norm.includes('جتلي') || norm.includes('جتني') || norm.includes('يتني') || norm.includes('اجتني') || norm.includes('شرفت') || norm.includes('طبت') || norm.includes('كانت يوم')) && (entities.hasExplicitCycle || entities.hasExplicitPeriod || entities.hasExplicitFlow || (entities.pain !== null && norm.includes('مغص')) || norm.includes('دم') || norm.includes('نزلت') || norm.includes('قعدت') || norm.includes('استمرت') || norm.includes('مدتها') || norm.includes('بتيجي كل'))) ||
+      ((norm.includes('سجل') || norm.includes('تسجيل') || norm.includes('بدات') || norm.includes('بدات') || norm.includes('جاتلي') || norm.includes('جتلي') || norm.includes('جتني') || norm.includes('يتني') || norm.includes('اجتني') || norm.includes('شرفت') || norm.includes('طبت') || norm.includes('كانت يوم')) && (entities.hasExplicitCycle || entities.hasExplicitPeriod || entities.hasExplicitFlow || (entities.pain !== null && norm.includes('مغص')) || norm.includes('دم') || norm.includes('نزلت') || norm.includes('قعدت') || norm.includes('استمرت') || norm.includes('مدتها') || norm.includes('بتيجي كل'))) ||
       text.includes('log period') || 
       text.includes('started on') || 
       text.includes('started today') || 
@@ -4508,7 +4508,7 @@ class ManagerService {
     // 2. ACTION: Follow-up Cycle Detail Updates
     const isDetailAnswer = (
       entities.hasExplicitFlow ||
-      (entities.pain !== null && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص') || norm.includes('/10') || norm.includes('درجة') || norm.includes('مستوى') || norm.includes('بقى') || norm.includes('صار'))) ||
+      (entities.pain !== null && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص') || norm.includes('/10') || norm.includes('درجه') || norm.includes('مستوي') || norm.includes('بقي') || norm.includes('صار'))) ||
       norm.includes('مفيش الم') || norm.includes('بدون الم') || norm.includes('لا يوجد الم') ||
       entities.hasExplicitCycle || entities.hasExplicitPeriod ||
       ((entities.hasExplicitSymptoms || entities.painLocs.length > 0) && (norm.includes('سجل') || norm.includes('حسيت') || norm.includes('عندي') || norm.includes('اشعر') || norm.includes('اعاني') || norm.includes('تحديث')))
