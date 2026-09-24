@@ -3020,28 +3020,32 @@ function parseSmartDate(raw, norm) {
 function extractAllHealthEntities(raw, isAr = true) {
   const norm = normalizeArabic(raw);
   const text = (raw || '').toLowerCase();
+  const hasNoPain = norm.includes('مفيش مغص') || norm.includes('بدون مغص') || norm.includes('لا يوجد مغص') || norm.includes('مافي مغص') || 
+                    norm.includes('مفيش الم') || norm.includes('بدون الم') || norm.includes('لا يوجد الم') || norm.includes('مافي الم') || 
+                    norm.includes('مفيش وجع') || norm.includes('بدون وجع') || norm.includes('لا يوجد وجع') || norm.includes('مافي وجع') || 
+                    text.includes('no pain') || text.includes('no cramp');
 
   // 1. Pain Locations
   const painLocs = [];
-  if (norm.includes('بطن') || norm.includes('مغص') || norm.includes('كرش') || norm.includes('معده') || (norm.includes('عوار') && (norm.includes('بطن') || norm.includes('حوض'))) || text.includes('abdomen') || text.includes('belly')) {
+  if (!hasNoPain && (norm.includes('بطن') || norm.includes('مغص') || norm.includes('كرش') || norm.includes('معده') || (norm.includes('عوار') && (norm.includes('بطن') || norm.includes('حوض'))) || text.includes('abdomen') || text.includes('belly'))) {
     painLocs.push(isAr ? 'أسفل البطن وتقلصات الرحم' : 'Lower Abdomen & Cramps');
   }
-  if (norm.includes('ضهر') || norm.includes('ظهر') || norm.includes('قطني') || (norm.includes('عوار') && norm.includes('ظهر')) || text.includes('back')) {
+  if (!hasNoPain && (norm.includes('ضهر') || norm.includes('ظهر') || norm.includes('قطني') || (norm.includes('عوار') && norm.includes('ظهر')) || text.includes('back'))) {
     painLocs.push(isAr ? 'أسفل الظهر والفقرات القطنية' : 'Lower Back Ache');
   }
-  if (norm.includes('حوض') || text.includes('pelvi')) {
+  if (!hasNoPain && (norm.includes('حوض') || text.includes('pelvi'))) {
     painLocs.push(isAr ? 'منطقة الحوض' : 'Pelvic Area');
   }
-  if (norm.includes('رجل') || norm.includes('فخذ') || norm.includes('ساق') || norm.includes('ركب') || text.includes('leg') || text.includes('thigh')) {
+  if (!hasNoPain && (norm.includes('رجل') || norm.includes('فخذ') || norm.includes('ساق') || norm.includes('ركب') || text.includes('leg') || text.includes('thigh'))) {
     painLocs.push(isAr ? 'الفخذين والساقين' : 'Thighs & Legs');
   }
-  if (norm.includes('ثدي') || norm.includes('صدر') || norm.includes('تحجر') || text.includes('breast')) {
+  if (!hasNoPain && (norm.includes('ثدي') || norm.includes('صدر') || norm.includes('تحجر') || text.includes('breast'))) {
     painLocs.push(isAr ? 'تحجر وحساسية الثدي' : 'Breast Tenderness');
   }
-  if (norm.includes('مبيض') || norm.includes('جنب') || norm.includes('جانب') || text.includes('ovary')) {
+  if (!hasNoPain && (norm.includes('مبيض') || norm.includes('جنب') || norm.includes('جانب') || text.includes('ovary'))) {
     painLocs.push(isAr ? 'الجانبين (المبايض)' : 'Ovary/Side Pain');
   }
-  if (norm.includes('مفاصل') || norm.includes('عضم') || norm.includes('عظام') || norm.includes('جسمي مكسر') || norm.includes('تكسير') || text.includes('joint')) {
+  if (!hasNoPain && (norm.includes('مفاصل') || norm.includes('عضم') || norm.includes('عظام') || norm.includes('جسمي مكسر') || norm.includes('تكسير') || text.includes('joint'))) {
     painLocs.push(isAr ? 'آلام المفاصل وتكسير الجسم' : 'Body & Joint Aches');
   }
 
@@ -3141,41 +3145,72 @@ function extractAllHealthEntities(raw, isAr = true) {
 
   // 5. Pain Level
   let pain = null;
-  const painNumMatch = norm.match(/(?:الم|ألم|وجع|مغص|عوار|درجة|مستوى|واصل|وصل|شدة|pain|cramp|level)[^0-9\n]{0,35}(\d{1,2})/) ||
-                       norm.match(/(\d{1,2})\s*(?:من\s*10|\/10|درجات|مستوى)/) ||
-                       norm.match(/(?:عوار|وجع|الم|مغص)\s*(?:البطن|الظهر|الحوض|جسمي)?[^0-9\n]{0,20}(\d{1,2})/) ||
-                       text.match(/(?:pain|cramp|level)[^0-9\n]{0,25}(\d{1,2})/);
-  if (painNumMatch) {
-    pain = parseInt(painNumMatch[1], 10);
-    if (pain > 10) pain = 10;
-  } else if ((norm.includes('جامد') || norm.includes('شديد جدا') || norm.includes('غير محتمل') || norm.includes('بموت') || norm.includes('فظيع') || text.includes('severe') || text.includes('unbearable')) && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص') || norm.includes('عوار') || !hasExplicitFlow)) {
-    pain = 8;
-  } else if (norm.includes('الم خفيف') || norm.includes('وجع خفيف') || norm.includes('مغص خفيف') || (norm.includes('بسيط') && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص'))) || (text.includes('mild') && text.includes('pain'))) {
-    pain = 3;
-  } else if ((norm.includes('الم متوسط') || norm.includes('وجع متوسط') || norm.includes('مغص متوسط') || (text.includes('moderate') && text.includes('pain')))) {
-    pain = 5;
+  if (hasNoPain) {
+    pain = 1;
+  } else {
+    const painNumMatch = norm.match(/(?:الم|ألم|وجع|مغص|عوار|درجة|مستوى|واصل|وصل|شدة|pain|cramp|level)[^0-9\n]{0,35}(\d{1,2})/) ||
+                         norm.match(/(\d{1,2})\s*(?:من\s*10|\/10|درجات|مستوى)/) ||
+                         norm.match(/(?:عوار|وجع|الم|مغص)\s*(?:البطن|الظهر|الحوض|جسمي)?[^0-9\n]{0,20}(\d{1,2})/) ||
+                         text.match(/(?:pain|cramp|level)[^0-9\n]{0,25}(\d{1,2})/);
+    if (painNumMatch) {
+      pain = parseInt(painNumMatch[1], 10);
+      if (pain > 10) pain = 10;
+    } else if ((norm.includes('جامد') || norm.includes('شديد جدا') || norm.includes('غير محتمل') || norm.includes('بموت') || norm.includes('فظيع') || text.includes('severe') || text.includes('unbearable')) && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص') || norm.includes('عوار') || !hasExplicitFlow)) {
+      pain = 8;
+    } else if (norm.includes('الم خفيف') || norm.includes('وجع خفيف') || norm.includes('مغص خفيف') || (norm.includes('بسيط') && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص'))) || (text.includes('mild') && text.includes('pain'))) {
+      pain = 3;
+    } else if ((norm.includes('الم متوسط') || norm.includes('وجع متوسط') || norm.includes('مغص متوسط') || (text.includes('moderate') && text.includes('pain')))) {
+      pain = 5;
+    }
   }
 
-  // 6. Period Duration
-  let periodLength = 5;
-  let hasExplicitPeriod = false;
-  const pMatch = norm.match(/(?:استمرت|مدتها|قعدت|جلست|طول الحيض|duration)\s*(\d{1,2})/) ||
-                 norm.match(/(\d{1,2})\s*(?:ايام|أيام|يوم|days)/);
-  if (pMatch) {
-    periodLength = parseInt(pMatch[1], 10);
-    if (periodLength < 2 || periodLength > 14) periodLength = 5;
-    hasExplicitPeriod = true;
-  }
-
-  // 7. Cycle Length
+  // 6. Cycle Length
   let cycleLength = 28;
   let hasExplicitCycle = false;
-  const cMatch = norm.match(/(?:كل|بتيجي كل|تتكرر كل|دوره|cycle)\s*(\d{2})/) ||
-                 norm.match(/(?:طول الدوره|طول الدورة)\s*(\d{2})/);
+  const cMatch = norm.match(/(?:طول\s*دورتي|طول\s*الدوره|طول\s*دوره|بين\s*الدورتين|بين\s*الدوره\s*والتانيه|الفتره\s*بين|بتيجي\s*كل|تتكرر\s*كل|تجي\s*كل|كل)\s*(\d{2})\s*(?:يوم|ايام)?/) ||
+                 norm.match(/(\d{2})\s*(?:يوم|ايام)?\s*(?:طول\s*الدوره|طول\s*دورتي|بين\s*الدورتين)/) ||
+                 text.match(/(?:cycle\s*length|cycle|every)\s*(\d{2})/);
   if (cMatch) {
-    cycleLength = parseInt(cMatch[1], 10);
-    if (cycleLength < 18 || cycleLength > 60) cycleLength = 28;
-    hasExplicitCycle = true;
+    const val = parseInt(cMatch[1], 10);
+    if (val >= 18 && val <= 60) {
+      cycleLength = val;
+      hasExplicitCycle = true;
+    }
+  }
+
+  // 7. Period Duration
+  let periodLength = 5;
+  let hasExplicitPeriod = false;
+  const pMatch = norm.match(/(?:بتقعد|تقعد|تستمر|استمرت|مدتها|مدة|طول\s*الحيض|نزول\s*الدم|مدة\s*النزيف|مدة\s*الحيض|الدم\s*بيقعد|الحيض)\s*(\d{1,2})\s*(?:يوم|ايام)?/) ||
+                 norm.match(/(\d{1,2})\s*(?:يوم|ايام)\s*(?:حيض|نزيف|دم)/) ||
+                 text.match(/(?:period\s*length|duration|lasts?|bleeding)\s*(\d{1,2})/);
+  if (pMatch) {
+    const val = parseInt(pMatch[1], 10);
+    if (val >= 2 && val <= 14) {
+      periodLength = val;
+      hasExplicitPeriod = true;
+    }
+  }
+
+  // Disambiguation / Fallback: If only period or cycle mentioned with numbers (excluding dates)
+  if (!hasExplicitCycle && !hasExplicitPeriod) {
+    let normClean = norm.replace(/\b\d{1,2}\s*(?:يناير|فبراير|مارس|ابريل|أبريل|مايو|يونيو|يوليو|اغسطس|أغسطس|سبتمبر|اكتوبر|أكتوبر|نوفمبر|ديسمبر)/g, '');
+    normClean = normClean.replace(/\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b|\b\d{1,2}[-/.]\d{1,2}[-/.]\d{4}\b|\b\d{1,2}[-/.]\d{1,2}\b/g, '');
+    normClean = normClean.replace(/(?:يوم|بتاريخ|تاريخ)\s*\d{1,2}/g, '');
+
+    const nums = normClean.match(/\b\d{1,2}\b/g);
+    if (nums && nums.length > 0) {
+      for (const nStr of nums) {
+        const n = parseInt(nStr, 10);
+        if (n >= 20 && n <= 45 && !hasExplicitCycle && !norm.includes('يوم ' + n) && !norm.includes('تاريخ ' + n)) {
+          cycleLength = n;
+          hasExplicitCycle = true;
+        } else if (n >= 2 && n <= 10 && !hasExplicitPeriod) {
+          periodLength = n;
+          hasExplicitPeriod = true;
+        }
+      }
+    }
   }
 
   return {
@@ -3448,6 +3483,7 @@ class ManagerService {
     if (cycles.length === 0) return { success: false };
 
     const latest = cycles[0];
+    if (updates.last_period_date) latest.last_period_date = updates.last_period_date;
     if (updates.cycle_length) latest.cycle_length = parseInt(updates.cycle_length);
     if (updates.period_length) latest.period_length = parseInt(updates.period_length);
     if (updates.flow_intensity) latest.flow_intensity = updates.flow_intensity;
@@ -4384,14 +4420,20 @@ class ManagerService {
     const entities = extractAllHealthEntities(raw, isAr);
     const detectedDate = parseSmartDate(raw, norm);
 
-    const isExplicitLogIntent = (
+    const isEditIntent = Boolean(
+      norm.includes('عدل') || norm.includes('غير') || norm.includes('تعديل') || norm.includes('تغيير') || 
+      norm.includes('بدل') || norm.includes('غلطت') || norm.includes('مش النهارده') || 
+      text.includes('change') || text.includes('update') || text.includes('edit') || text.includes('mistake')
+    );
+
+    const isExplicitLogIntent = !isEditIntent && (
       norm.includes('دورتي') || 
       norm.includes('دوره') || 
       norm.includes('حيض') || 
       norm.includes('طمث') || 
       norm.includes('بريد') ||
       text.includes('period') ||
-      ((norm.includes('سجل') || norm.includes('تسجيل') || norm.includes('بدات') || norm.includes('بدات') || norm.includes('جاتلي') || norm.includes('جتلي') || norm.includes('جتني') || norm.includes('يتني') || norm.includes('اجتني') || norm.includes('شرفت') || norm.includes('طبت') || norm.includes('كانت يوم')) && (entities.hasExplicitCycle || entities.hasExplicitPeriod || entities.hasExplicitFlow || (entities.pain !== null && norm.includes('مغص')) || norm.includes('دم') || norm.includes('نزلت') || norm.includes('قعدت') || norm.includes('استمرت') || norm.includes('مدتها') || norm.includes('بتيجي كل'))) ||
+      ((norm.includes('سجل') || norm.includes('تسجيل') || norm.includes('بدات') || norm.includes('جاتلي') || norm.includes('جتلي') || norm.includes('جتني') || norm.includes('يتني') || norm.includes('اجتني') || norm.includes('شرفت') || norm.includes('طبت') || norm.includes('كانت يوم')) && (entities.hasExplicitCycle || entities.hasExplicitPeriod || entities.hasExplicitFlow || (entities.pain !== null && norm.includes('مغص')) || norm.includes('دم') || norm.includes('نزلت') || norm.includes('قعدت') || norm.includes('استمرت') || norm.includes('مدتها') || norm.includes('بتيجي كل'))) ||
       text.includes('log period') || 
       text.includes('started on') || 
       text.includes('started today') || 
@@ -4401,12 +4443,34 @@ class ManagerService {
 
     // 1. ACTION: Explicit Cycle Logging
     if (detectedDate && isExplicitLogIntent) {
+      const existingCycles = this.getLocalCycles(username);
+      const isFirstTimeLogging = (existingCycles.length === 0);
+      const hasCustomCycleSet = currentUser?.has_custom_cycle_set === true;
+
       const painLevelToSave = entities.pain !== null ? entities.pain : (entities.hasExplicitPain ? 5 : null);
+
+      let cycleLengthToSave = 28;
+      if (entities.hasExplicitCycle) {
+        cycleLengthToSave = entities.cycleLength;
+      } else if (currentUser?.default_cycle_length) {
+        cycleLengthToSave = currentUser.default_cycle_length;
+      } else if (analytics.avg_cycle_length) {
+        cycleLengthToSave = analytics.avg_cycle_length;
+      }
+
+      let periodLengthToSave = 5;
+      if (entities.hasExplicitPeriod) {
+        periodLengthToSave = entities.periodLength;
+      } else if (currentUser?.default_period_length) {
+        periodLengthToSave = currentUser.default_period_length;
+      } else if (analytics.avg_period_length) {
+        periodLengthToSave = analytics.avg_period_length;
+      }
 
       const cycleRes = await this.logCycle({
         last_period_date: detectedDate,
-        cycle_length: entities.cycleLength,
-        period_length: entities.periodLength,
+        cycle_length: cycleLengthToSave,
+        period_length: periodLengthToSave,
         flow_intensity: entities.flow,
         pain_level: painLevelToSave,
         pain_locations: entities.painLocs.join(', '),
@@ -4417,8 +4481,13 @@ class ManagerService {
 
       const detailsList = [];
       detailsList.push(`📅 **${isAr ? 'تاريخ بداية الدورة' : 'Cycle Start Date'}:** \`${savedRecord.last_period_date}\``);
-      detailsList.push(`🩸 **${isAr ? 'مدة الحيض' : 'Period Duration'}:** ${savedRecord.period_length} ${uDays}`);
-      detailsList.push(`🔄 **${isAr ? 'طول الدورة المعتاد' : 'Cycle Length'}:** ${savedRecord.cycle_length} ${uDays}`);
+      
+      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitPeriod)) {
+        detailsList.push(`🩸 **${isAr ? 'مدة الحيض' : 'Period Duration'}:** ${savedRecord.period_length} ${uDays}`);
+      }
+      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitCycle)) {
+        detailsList.push(`🔄 **${isAr ? 'طول الدورة المعتاد' : 'Cycle Length'}:** ${savedRecord.cycle_length} ${uDays}`);
+      }
 
       if (entities.hasExplicitFlow) {
         const flowLabel = savedRecord.flow_intensity === 'heavy' ? (isAr ? 'غزير (تدفق كثيف)' : 'Heavy') : (savedRecord.flow_intensity === 'light' ? (isAr ? 'خفيف' : 'Light') : (isAr ? 'متوسط / طبيعي' : 'Medium'));
@@ -4427,7 +4496,8 @@ class ManagerService {
 
       if (painLevelToSave !== null) {
         const locsStr = entities.painLocs.length > 0 ? ` (${entities.painLocs.join('، ')})` : '';
-        detailsList.push(`🩺 **${isAr ? 'مستوى ومكان الألم' : 'Pain Level & Area'}:** ${painLevelToSave}/10${locsStr}`);
+        const painDesc = painLevelToSave === 1 ? (isAr ? 'بدون ألم يذكر (1/10) - الحمد لله ✨' : 'No noticeable pain (1/10) ✨') : `${painLevelToSave}/10${locsStr}`;
+        detailsList.push(`🩺 **${isAr ? 'مستوى ومكان الألم' : 'Pain Level & Area'}:** ${painDesc}`);
       } else if (entities.painLocs.length > 0) {
         detailsList.push(`🩺 **${isAr ? 'مناطق الألم' : 'Pain Areas'}:** ${entities.painLocs.join('، ')}`);
       }
@@ -4441,34 +4511,46 @@ class ManagerService {
       }
 
       const missingQuestions = [];
+      if (isFirstTimeLogging && !entities.hasExplicitCycle && !hasCustomCycleSet) {
+        missingQuestions.push(isAr ? '🔄 1. **طول دورتكِ المعتاد:** كم يوماً يمر بين أول يوم في دورتكِ وبداية الدورة التالية عادة؟ (المتوسط الطبيعي 24 إلى 35 يوماً)' : '🔄 1. **Cycle length:** How many days between your period starts usually?');
+      }
+      if (isFirstTimeLogging && !entities.hasExplicitPeriod && !hasCustomCycleSet) {
+        missingQuestions.push(isAr ? '🩸 2. **مدة نزول الدم (الحيض):** كم يوماً يستمر النزيف عادة؟ (مثلاً: 4 إلى 7 أيام؟)' : '🩸 2. **Period duration:** How many days does your bleeding usually last?');
+      }
       if (!entities.hasExplicitFlow) {
-        missingQuestions.push(isAr ? '💧 **كمية النزيف:** هل التدفق (خفيف، متوسط، أم غزير)؟' : '💧 **Flow volume:** Was it light, medium, or heavy?');
+        const qNum = missingQuestions.length + 1;
+        missingQuestions.push(isAr ? `💧 ${qNum}. **كمية وغزارة النزيف اليوم:** هل التدفق (خفيف، متوسط، أم غزير)؟` : `💧 ${qNum}. **Flow volume:** Is your bleeding light, medium, or heavy today?`);
       }
       if (!entities.hasExplicitPain && painLevelToSave === null) {
-        missingQuestions.push(isAr ? '🩺 **الألم والمغص:** هل شعرتِ بأي تقلصات (مستوى الوجع من 1 إلى 10) وفي أي منطقة؟' : '🩺 **Pain level:** Any cramps (1-10) or back/pelvic aches?');
-      }
-      if (!entities.hasExplicitCycle) {
-        missingQuestions.push(isAr ? '🔄 **طول الدورة المعتاد:** كم يوماً يمر بين دورتكِ والأخرى عادة؟ (افترضت لكِ 28 يوماً)' : '🔄 **Cycle length:** How many days between your periods usually? (defaulted to 28)');
-      }
-      if (!entities.hasExplicitSymptoms) {
-        missingQuestions.push(isAr ? '⭐ **أعراض أخرى:** هل لاحظتِ أي صداع، تقلب مزاجي، انتفاخ، أو إفرازات معينة؟' : '⭐ **Other symptoms:** Any headache, mood changes, bloating, or clear mucus?');
+        const qNum = missingQuestions.length + 1;
+        missingQuestions.push(isAr ? `🩺 ${qNum}. **الألم والمغص والأعراض:** هل تشعرين بأي وجع أو تقلصات (من 1 إلى 10) وفي أي منطقة؟ أو أعراض كالصداع والانتفاخ؟` : `🩺 ${qNum}. **Cramps & Symptoms:** Any pain (1-10) or symptoms like headache or bloating?`);
       }
 
       const customTips = [];
-      if (painLevelToSave >= 7 || entities.painLocs.some(l => l.includes('البطن') || l.includes('الظهر'))) {
-        customTips.push(isAr ? '💊 **لتسكين المغص والتقلصات:** إيبوبروفين (بروفين 400 ملجم) بعد الأكل مباشرة + وضع قربة ماء دافئ على الحوض وأسفل الظهر لارتخاء العضلات.' : '💊 **For Cramp Relief:** Ibuprofen 400mg after meals + warm heating pad on the lower abdomen.');
+      if (painLevelToSave >= 7) {
+        customTips.push(isAr ? '💊 **لتسكين المغص الشديد:** إيبوبروفين (بروفين 400 ملجم) أو كتافلام بعد الأكل مباشرة + وضع قربة ماء دافئ على أسفل البطن والظهر لارتخاء العضلات فوراً.' : '💊 **For Severe Cramps:** Ibuprofen 400mg after meals + warm heating pad on the lower abdomen.');
+      } else if (painLevelToSave >= 4 || entities.painLocs.some(l => l.includes('البطن') || l.includes('الظهر'))) {
+        customTips.push(isAr ? '🌸 **كمادات دافئة وتسكين لطيف:** وضع قربة ماء دافئ على أسفل البطن أو أسفل الظهر لارتخاء العضلات، ويمكنكِ أخذ بنادول أو بروفين خفيف بعد الأكل لتهدئة المغص.' : '🌸 **Warm Compress & Gentle Relief:** A warm heating pad on your lower tummy relaxes muscles and eases cramps.');
+      } else {
+        customTips.push(isAr ? '🌸 **تدفئة واسترخاء:** حمام دافئ خفيف أو تدفئة الجسم يساعد عضلاتكِ على الاسترخاء التام وتجنب أي تقلصات مفاجئة.' : '🌸 **Warmth & Relaxation:** Gentle warmth helps your muscles stay relaxed and comfortable.');
       }
+
+      customTips.push(isAr ? '🍵 **مشروبات دافئة مريحة:** كوب قرفة دافئة، شاي النعناع والزنجبيل بالعسل، أو البابونج لتهدئة التقلصات وتنشيط الدورة الدموية.' : '🍵 **Soothing Warm Drinks:** Warm cinnamon, peppermint ginger tea with honey, or chamomile to relax tension.');
+
       if (entities.flow === 'heavy' || entities.symptomsList.some(s => s.includes('كتل') || s.includes('دوخة'))) {
-        customTips.push(isAr ? '🩸 **لغزارة النزيف والدوخة:** احرصي على شرب 2.5 لتر سوائل دافئة يومياً، وتناولي أطعمة غنية بالحديد (سبانخ، عدس، كبدة، عصير برتقال) لتجديد كريات الدم.' : '🩸 **For Heavy Flow & Dizziness:** Drink 2.5L warm fluids and include iron-rich foods with vitamin C.');
+        customTips.push(isAr ? '🩸 **لغزارة النزيف والدوخة:** احرصي على شرب 2.5 لتر سوائل دافئة يومياً، وتناولي وجبات غنية بالحديد (سبانخ، عدس، كبدة، عصير برتقال) لتجديد طاقتكِ.' : '🩸 **For Heavy Flow & Energy:** Drink 2.5L warm fluids and include iron-rich foods with vitamin C.');
+      } else {
+        customTips.push(isAr ? '🍫 **جرعة دلال وتعديل مزاج:** مسموح لكِ بقطعة شوكولاتة داكنة لذيذة (غنية بالماغنسيوم وتفرز هرمونات السعادة) ✨' : '🍫 **Sweet Self-Care:** A piece of dark chocolate is great for mood and magnesium boost ✨');
       }
+
       if (entities.symptomsList.some(s => s.includes('صداع'))) {
-        customTips.push(isAr ? '🤕 **للصداع النصفي الهرموني:** الراحة في غرفة هادئة ومظلمة، شرب ماء كافٍ، ومسكن الباراسيتامول (بنادول 500 ملجم) لطيف جداً على المعدة.' : '🤕 **For Hormonal Headache:** Rest in a quiet dark room and stay well-hydrated with gentle paracetamol.');
+        customTips.push(isAr ? '🤕 **للصداع الهرموني:** الراحة في غرفة هادئة ومظلمة، شرب ماء كافٍ، ومسكن الباراسيتامول (بنادول 500 ملجم) لطيف جداً على المعدة.' : '🤕 **For Hormonal Headache:** Rest in a quiet dark room and stay well-hydrated with gentle paracetamol.');
       }
       if (entities.symptomsList.some(s => s.includes('عصبية') || s.includes('حلويات') || s.includes('مزاج'))) {
-        customTips.push(isAr ? '🍫 **لتقلب المزاج واشتهاء السكريات:** قطعة شوكولاتة داكنة (غنية بالماغنسيوم ومحفزة للدوبامين) + شاي البابونج والنعناع الدافئ لتهدئة الأعصاب.' : '🍫 **For Mood & Cravings:** Dark chocolate (rich in magnesium) + soothing chamomile tea.');
+        customTips.push(isAr ? '🧘‍♀️ **لراحة الأعصاب والمزاج:** خدي نفس عميق، وابتعدي عن أي ضغوطات.. أنتِ في مرحلة حساسة وهرموناتكِ محتاجة هدوء واسترخاء.' : '🧘‍♀️ **For Calm & Serenity:** Deep breaths and avoid stress, give yourself kindness today.');
       }
       if (entities.symptomsList.some(s => s.includes('انتفاخ'))) {
-        customTips.push(isAr ? '🌿 **لانتفاخ البطن وعسر الهضم:** شاي الزنجبيل والنعناع بالعسل يخفف احتباس الغازات ويريح القولون سريعاً.' : '🌿 **For Bloating:** Warm ginger & peppermint tea eases digestion.');
+        customTips.push(isAr ? '🌿 **لانتفاخ البطن:** شاي الزنجبيل والنعناع بالعسل يخفف احتباس الغازات ويريح القولون سريعاً، وقللي الملح في الوجبات.' : '🌿 **For Bloating:** Warm ginger & peppermint tea eases digestion.');
       }
 
       const nextD = new Date(savedRecord.last_period_date);
@@ -4482,20 +4564,34 @@ class ManagerService {
       let followUpPrompt = '';
       if (missingQuestions.length > 0) {
         followUpPrompt = isAr
-          ? `\n\n💬 **لجعل تحليلاتكِ وتوقعات التبويض أدق ما يكون، أخبريني يا جميلة:**\n` + missingQuestions.join('\n') + `\n\n*(اكتبيها لي هنا مباشرة وسأقوم بتحديث السجل فوراً! ✨)*`
-          : `\n\n💬 **To make your forecast perfectly accurate, please tell me:**\n` + missingQuestions.join('\n');
+          ? (isFirstTimeLogging
+              ? `\n\n💬 **عشان أهتم بيكي وأحسب لكِ كل مواعيدكِ القادمة بأعلى دقة، شاركيني التفاصيل دي يا جميلة:**\n` + missingQuestions.join('\n') + `\n\n*(اكتبيها لي براحتكِ وسأحفظها كمرجع دائم لكافة دوراتكِ القادمة! ✨)*`
+              : `\n\n💬 **طمنيني عنكِ يا قمر وعن أعراضكِ وغزارة النزيف اليوم:**\n` + missingQuestions.join('\n') + `\n\n*(اكتبيها لي هنا لتحديث سجل هذه الدورة والاطمئنان عليكِ فوراً! ✨)*`)
+          : (isFirstTimeLogging
+              ? `\n\n💬 **To personalize your calculations with maximum precision, please share these baseline details:**\n` + missingQuestions.join('\n')
+              : `\n\n💬 **Please tell me about your flow and how you are feeling today:**\n` + missingQuestions.join('\n'));
       }
 
       let tipsSection = '';
       if (customTips.length > 0) {
         tipsSection = isAr
-          ? `\n\n💡 **نصائح عناية مخصصة لأعراضكِ اليوم:**\n` + customTips.map(t => `- ${t}`).join('\n')
-          : `\n\n💡 **Tailored Care for Your Symptoms:**\n` + customTips.map(t => `- ${t}`).join('\n');
+          ? `\n\n💡 **نصائح عناية وتدليل مخصصة لراحتكِ اليوم:**\n` + customTips.map(t => `- ${t}`).join('\n')
+          : `\n\n💡 **Tailored Self-Care & Comfort Tips for Today:**\n` + customTips.map(t => `- ${t}`).join('\n');
       }
 
-      const reply = isAr
-        ? `🌸 **تم تسجيل وتوثيق دورتكِ بنجاح يا قمر 💕**\n\n${detailsList.join('\n')}\n\n🔮 **موعد دورتكِ القادمة:** \`${nextPStr}\`\n⭐ **يوم التبويض المتوقع:** \`${ovuStr}\`${tipsSection}${followUpPrompt}`
-        : `🌸 **Period logged successfully lovely 💕**\n\n${detailsList.join('\n')}\n\n🔮 **Next Period:** \`${nextPStr}\`\n⭐ **Ovulation:** \`${ovuStr}\`${tipsSection}${followUpPrompt}`;
+      const heading = isFirstTimeLogging
+        ? (isAr ? `🌸 **ألف سلامة عليكِ يا ${userDisplayName} يا جميلة 💕 تم تسجيل بداية دورتكِ بنجاح**\n✨ جسمكِ بيبذل مجهود رائع، فاستحقي تاخدي وقت راحة وتدلعي نفسك بالكامل ☕💆‍♀️` : `🌸 **Take gentle care lovely ${userDisplayName} 💕 Your period start date has been logged**\n✨ Your body is doing amazing work, make sure to rest and take it easy today! ☕💆‍♀️`)
+        : (isAr ? `🌸 **ألف سلامة عليكِ يا ${userDisplayName} يا حبيبتي 💕 تم توثيق دورتكِ الجديدة بنجاح**\n✨ يومكِ هادي ومريح يارب، وأنا جنبكِ دايماً خطوة بخطوة ☕💆‍♀️` : `🌸 **Take gentle care lovely ${userDisplayName} 💕 Your new cycle is logged**\n✨ Wishing you a calm, restful day! ☕💆‍♀️`);
+
+      const forecastNote = isFirstTimeLogging && !entities.hasExplicitCycle
+        ? (isAr ? `\n*(محسوب مبدئياً على 28 يوماً، وسنقوم بضبطه بدقة فور إخباري ببياناتكِ)*` : `\n*(Provisional based on 28 days)*`)
+        : '';
+
+      const encouragementFooter = isAr
+        ? `\n\n💖 **تذكري:** أنتِ قوية ورائعة، خدي راحة تامة وما تشيليش هم أي حاجة.. أنا معاكِ دايماً!`
+        : `\n\n💖 **Remember:** You are strong and wonderful, take lots of rest and be gentle with yourself today!`;
+
+      const reply = `${heading}\n\n${detailsList.join('\n')}\n\n🔮 **موعد دورتكِ القادمة:** \`${nextPStr}\`\n⭐ **يوم التبويض المتوقع:** \`${ovuStr}\`${forecastNote}${tipsSection}${followUpPrompt}${encouragementFooter}`;
 
       const history = this.getChatHistory(username);
       history.push({ role: 'user', content: raw });
@@ -4505,18 +4601,26 @@ class ManagerService {
       return { success: true, ai_reply: reply, saved_record: savedRecord };
     }
 
-    // 2. ACTION: Follow-up Cycle Detail Updates
+    // 2. ACTION: Follow-up Cycle Detail Updates & Modifications
+    const isDateEditIntent = Boolean(detectedDate && (norm.includes('عدل') || norm.includes('غير') || norm.includes('تعديل') || norm.includes('تغيير') || norm.includes('بدل') || norm.includes('غلطت') || norm.includes('مش النهارده') || norm.includes('بدات يوم') || norm.includes('كانت يوم') || text.includes('change date') || text.includes('update date') || text.includes('edit date')));
+
     const isDetailAnswer = (
+      isDateEditIntent ||
       entities.hasExplicitFlow ||
       (entities.pain !== null && (norm.includes('الم') || norm.includes('وجع') || norm.includes('مغص') || norm.includes('/10') || norm.includes('درجه') || norm.includes('مستوي') || norm.includes('بقي') || norm.includes('صار'))) ||
       norm.includes('مفيش الم') || norm.includes('بدون الم') || norm.includes('لا يوجد الم') ||
       entities.hasExplicitCycle || entities.hasExplicitPeriod ||
-      ((entities.hasExplicitSymptoms || entities.painLocs.length > 0) && (norm.includes('سجل') || norm.includes('حسيت') || norm.includes('عندي') || norm.includes('اشعر') || norm.includes('اعاني') || norm.includes('تحديث')))
+      ((entities.hasExplicitSymptoms || entities.painLocs.length > 0) && (norm.includes('سجل') || norm.includes('حسيت') || norm.includes('عندي') || norm.includes('اشعر') || norm.includes('اعاني') || norm.includes('تحديث') || norm.includes('عدل') || norm.includes('غير')))
     );
 
     if (isDetailAnswer) {
       const updates = {};
       const updatedFieldsList = [];
+
+      if (isDateEditIntent) {
+        updates.last_period_date = detectedDate;
+        updatedFieldsList.push(`📅 ${isAr ? 'تاريخ بداية الدورة' : 'Cycle Start Date'} (${detectedDate})`);
+      }
 
       if (entities.hasExplicitFlow) {
         updates.flow_intensity = entities.flow;
@@ -4534,12 +4638,30 @@ class ManagerService {
 
       if (entities.hasExplicitCycle) {
         updates.cycle_length = entities.cycleLength;
-        updatedFieldsList.push(`🔄 ${isAr ? 'طول الدورة' : 'Cycle'} (${entities.cycleLength} ${uDays})`);
+        updatedFieldsList.push(`🔄 ${isAr ? 'طول الدورة' : 'Cycle'} (${entities.cycleLength} ${uDays}) - تم اعتماده لحساباتكِ`);
+        
+        if (currentUser) {
+          currentUser.default_cycle_length = entities.cycleLength;
+          currentUser.has_custom_cycle_set = true;
+          this.setUser(currentUser);
+          const users = this.getLocalUsers();
+          users[currentUser.username.toLowerCase()] = currentUser;
+          this.saveLocalUsers(users);
+        }
       }
 
       if (entities.hasExplicitPeriod) {
         updates.period_length = entities.periodLength;
-        updatedFieldsList.push(`🩸 ${isAr ? 'مدة الحيض' : 'Duration'} (${entities.periodLength} ${uDays})`);
+        updatedFieldsList.push(`🩸 ${isAr ? 'مدة الحيض' : 'Duration'} (${entities.periodLength} ${uDays}) - تم اعتمادها لحساباتكِ`);
+        
+        if (currentUser) {
+          currentUser.default_period_length = entities.periodLength;
+          currentUser.has_custom_cycle_set = true;
+          this.setUser(currentUser);
+          const users = this.getLocalUsers();
+          users[currentUser.username.toLowerCase()] = currentUser;
+          this.saveLocalUsers(users);
+        }
       }
 
       if (entities.painLocs.length > 0) {
@@ -4560,9 +4682,31 @@ class ManagerService {
       if (Object.keys(updates).length > 0) {
         const updateRes = await this.updateLatestCycle(updates);
         if (updateRes.success) {
+          const rec = updateRes.record;
+          const updatedNextD = new Date(rec.last_period_date);
+          updatedNextD.setDate(updatedNextD.getDate() + (rec.cycle_length || 28));
+          const updatedNextStr = updatedNextD.toISOString().split('T')[0];
+
+          const updatedOvuD = new Date(rec.last_period_date);
+          updatedOvuD.setDate(updatedOvuD.getDate() + ((rec.cycle_length || 28) - 14));
+          const updatedOvuStr = updatedOvuD.toISOString().split('T')[0];
+
+          const supportiveTips = [];
+          if (rec.pain_level && rec.pain_level >= 5) {
+            supportiveTips.push(isAr ? '🩺 **لراحة المغص:** جربي الاستلقاء في وضعية الجنين (Fetal position) مع وسادة بين ركبتيكِ لتخفيف الضغط على عضلات الحوض والظهر، ومسكن خفيف بعد الأكل لو الألم زاد.' : '🩺 **For Cramps:** Rest in the fetal position with a pillow between your knees.');
+          }
+          if (rec.flow_intensity === 'heavy') {
+            supportiveTips.push(isAr ? '🩸 **لطاقتكِ:** اشربي سوائل دافئة كتير وتناولي وجبات مغذية فيها حديد وخضروات طازجة لتعويض نشاطكِ.' : '🩸 **For Energy:** Stay hydrated with warm drinks and iron-rich meals.');
+          }
+          supportiveTips.push(isAr ? '🌸 **تدليل النفس:** جهزي مشروبكِ المفضل، استرخي تماماً، وخدي قسط كافي من النوم والراحة.' : '🌸 **Self-Care:** Sip your favorite warm tea and get plenty of cozy rest.');
+
+          const tipsBlock = isAr
+            ? `\n\n💡 **نصائح مخصصة لأعراضكِ اليوم:**\n` + supportiveTips.map(t => `- ${t}`).join('\n')
+            : `\n\n💡 **Customized Comfort Tips for You:**\n` + supportiveTips.map(t => `- ${t}`).join('\n');
+
           const reply = isAr
-            ? `🌸 **شكراً لكِ يا جميلة 💕 تم تحديث وتوثيق كافة تفاصيل دورتكِ بنجاح:**\n\n✅ **التفاصيل المحدثة:**\n${updatedFieldsList.map(f => `- ${f}`).join('\n')}\n\n✨ أصبحت تحليلاتكِ، التقويم، ومواعيد التبويض محسوبة بأعلى دقة ممكنة في حسابكِ!`
-            : `🌸 **Thank you lovely 💕 Your cycle details have been updated:**\n\n✅ **Updated:**\n${updatedFieldsList.map(f => `- ${f}`).join('\n')}\n\n✨ Your calendar and ovulation forecasts are now fully synchronized!`;
+            ? `🌸 **تسلمي لي يا حبيبتي يا ${userDisplayName} 💕 تم توثيق وتحديث كافة تفاصيلكِ بنجاح!**\n\n✅ **التفاصيل المحدثة في ملفكِ:**\n${updatedFieldsList.map(f => `- ${f}`).join('\n')}\n\n🔮 **موعد دورتكِ القادمة المحدث:** \`${updatedNextStr}\`\n⭐ **يوم التبويض المتوقع المحدث:** \`${updatedOvuStr}\`${tipsBlock}\n\n💖 **أنا هنا دايماً معاكِ لأي سؤال أو استشارة.. ارتاحي ودلعي نفسكِ يا قمر! ✨**`
+            : `🌸 **Thank you so much lovely ${userDisplayName} 💕 Your details have been recorded successfully!**\n\n✅ **Updated Details:**\n${updatedFieldsList.map(f => `- ${f}`).join('\n')}\n\n🔮 **Updated Next Period:** \`${updatedNextStr}\`\n⭐ **Updated Ovulation:** \`${updatedOvuStr}\`${tipsBlock}\n\n💖 **I am always here for you.. Rest well and take gentle care! ✨**`;
           
           const history = this.getChatHistory(username);
           history.push({ role: 'user', content: raw });
