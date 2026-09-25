@@ -1830,6 +1830,24 @@
                             </div>
                         </div>
 
+                        <!-- 💌 Compact Daily Support Affirmation Banner (Mobile & Desktop) -->
+                        <div class="encouragement-card compact-affirmation" id="dailyAffirmationBox" style="margin: 0 0 10px 0;">
+                            <div class="affirmation-content">
+                                <div class="affirmation-icon" id="affirmationIcon">🌸</div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div class="affirmation-text" id="affirmationText">
+                                        أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود هرموني عظيم.. دلعي نفسكِ وخدي راحة النهاردة 💕
+                                    </div>
+                                    <div class="affirmation-sub" id="affirmationSub" data-i18n="affirmationSub">
+                                        رسالة تشجيعية يومية مخصصة لدعمكِ وراحتكِ النفسية
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn-new-affirmation" onclick="getRandomAffirmation(true)">
+                                🔄 <span data-i18n="btnNewAffirmation">رسالة جديدة</span>
+                            </button>
+                        </div>
+
                         <div class="chat-messages" id="chatMessages">
                             <div class="msg-bubble bot" id="chatWelcomeMsg">
                                 مرحباً بكِ يا جميلة! 💕 كيف أستطيع مساعدتكِ اليوم في تتبع دورتكِ، غزارة النزيف، أو تخفيف التقلصات؟
@@ -3881,17 +3899,108 @@ class ManagerService {
     localStorage.setItem(this.usersDbKey, JSON.stringify(users));
   }
 
-  getLocalCycles(username) {
-    if (!username) return [];
-    const raw = localStorage.getItem(`${this.cyclesDbKey}_${username.toLowerCase()}`);
-    const list = raw ? JSON.parse(raw) : [];
-    return list.sort((a, b) => new Date(b.last_period_date || 0) - new Date(a.last_period_date || 0));
+  getLocalCycles(userOrIdentifier) {
+    if (!userOrIdentifier) {
+      const activeUser = this.getUser();
+      userOrIdentifier = activeUser || 'guest';
+    }
+
+    let keysToTry = [];
+    if (typeof userOrIdentifier === 'object' && userOrIdentifier !== null) {
+      if (userOrIdentifier.email) keysToTry.push(userOrIdentifier.email.toLowerCase().trim());
+      if (userOrIdentifier.username) keysToTry.push(userOrIdentifier.username.toLowerCase().trim());
+      if (userOrIdentifier.id) keysToTry.push(String(userOrIdentifier.id));
+    } else if (typeof userOrIdentifier === 'string') {
+      const clean = userOrIdentifier.toLowerCase().trim();
+      keysToTry.push(clean);
+      const users = this.getLocalUsers();
+      for (const k in users) {
+        const u = users[k];
+        if (u.username.toLowerCase() === clean || (u.email && u.email.toLowerCase() === clean)) {
+          if (u.email) keysToTry.push(u.email.toLowerCase().trim());
+          if (u.username) keysToTry.push(u.username.toLowerCase().trim());
+        }
+      }
+    }
+
+    // Include common local alias keys on this device to prevent any cycle loss
+    keysToTry.push('default', 'user', 'mariam', 'guest', 'maryam');
+    keysToTry = Array.from(new Set(keysToTry)).filter(Boolean);
+
+    const seenDates = new Set();
+    const mergedList = [];
+
+    for (const key of keysToTry) {
+      const raw = localStorage.getItem(`${this.cyclesDbKey}_${key}`);
+      if (raw) {
+        try {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list)) {
+            for (const item of list) {
+              const d = item.last_period_date;
+              if (d && !seenDates.has(d)) {
+                seenDates.add(d);
+                mergedList.push(item);
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    return mergedList.sort((a, b) => new Date(b.last_period_date || 0) - new Date(a.last_period_date || 0));
   }
 
-  saveLocalCycles(username, cycles) {
-    if (!username) return;
+  saveLocalCycles(userOrIdentifier, cycles) {
+    if (!userOrIdentifier) {
+      userOrIdentifier = this.getUser() || 'guest';
+    }
     const sorted = (cycles || []).sort((a, b) => new Date(b.last_period_date || 0) - new Date(a.last_period_date || 0));
-    localStorage.setItem(`${this.cyclesDbKey}_${username.toLowerCase()}`, JSON.stringify(sorted));
+    const json = JSON.stringify(sorted);
+
+    let keysToSave = [];
+    if (typeof userOrIdentifier === 'object' && userOrIdentifier !== null) {
+      if (userOrIdentifier.email) keysToSave.push(userOrIdentifier.email.toLowerCase().trim());
+      if (userOrIdentifier.username) keysToSave.push(userOrIdentifier.username.toLowerCase().trim());
+    } else if (typeof userOrIdentifier === 'string') {
+      keysToSave.push(userOrIdentifier.toLowerCase().trim());
+    }
+    keysToSave = Array.from(new Set(keysToSave)).filter(Boolean);
+
+    for (const k of keysToSave) {
+      localStorage.setItem(`${this.cyclesDbKey}_${k}`, json);
+    }
+
+    // Trigger background cloud sync if online
+    this.syncWithCloud().catch(() => {});
+  }
+
+  async syncWithCloud() {
+    const user = this.getUser();
+    if (!user) return;
+    const cleanEmail = (user.email || '').trim().toLowerCase();
+    if (!cleanEmail) return;
+
+    const cycles = this.getLocalCycles(user);
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          user: user,
+          cycles: cycles
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cycles && data.cycles.length > cycles.length) {
+          this.saveLocalCycles(user, data.cycles);
+        }
+      }
+    } catch (e) {
+      // Offline fallback safe
+    }
   }
 
   // Auth Operations
@@ -3921,21 +4030,40 @@ class ManagerService {
     for (const k in users) {
       const u = users[k];
       if (u.username.toLowerCase() === cleanId || (u.email && u.email.toLowerCase() === cleanId)) {
-        if (u.password === password) {
-          foundUser = u;
-        }
+        foundUser = u;
         break;
       }
     }
 
+    // If not found in local users and is email, try restoring from Cloud API
+    if (!foundUser && cleanId.includes('@')) {
+      try {
+        const cloudRes = await fetch(`/api/sync?email=${encodeURIComponent(cleanId)}`);
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (cloudData.success && cloudData.user) {
+            foundUser = cloudData.user;
+            users[foundUser.username.toLowerCase()] = foundUser;
+            if (foundUser.email) users[foundUser.email.toLowerCase()] = foundUser;
+            this.saveLocalUsers(users);
+            if (cloudData.cycles && cloudData.cycles.length > 0) {
+              this.saveLocalCycles(foundUser, cloudData.cycles);
+            }
+          }
+        }
+      } catch (err) {}
+    }
+
     if (!foundUser) {
       if (cleanId) {
+        const isEmail = cleanId.includes('@');
+        const defaultName = isEmail ? cleanId.split('@')[0] : identifier.trim();
         foundUser = {
           id: Date.now(),
-          username: identifier.trim(),
-          display_name: identifier.trim(),
-          email: `${cleanId}@safe.app`,
-          password: password,
+          username: defaultName,
+          display_name: defaultName,
+          email: isEmail ? cleanId : `${cleanId}@safe.app`,
+          password: password || '123456',
           age: 24,
           weight: 60,
           height: 165,
@@ -3945,6 +4073,7 @@ class ManagerService {
           created_at: new Date().toISOString()
         };
         users[foundUser.username.toLowerCase()] = foundUser;
+        if (foundUser.email) users[foundUser.email.toLowerCase()] = foundUser;
         this.saveLocalUsers(users);
       } else {
         return { success: false, error: 'بيانات الدخول غير صحيحة / Invalid credentials' };
@@ -3954,6 +4083,10 @@ class ManagerService {
     const token = 'safe_token_' + Date.now();
     this.setToken(token);
     this.setUser(foundUser);
+
+    // Auto-sync after login
+    this.syncWithCloud().catch(() => {});
+
     return { success: true, token, user: foundUser };
   }
 
@@ -4051,7 +4184,7 @@ class ManagerService {
   async getCycles() {
     const user = this.getUser();
     if (!user) return { success: true, count: 0, cycles: [] };
-    const cycles = this.getLocalCycles(user.username);
+    const cycles = this.getLocalCycles(user);
     return { success: true, count: cycles.length, cycles };
   }
 
@@ -4059,7 +4192,7 @@ class ManagerService {
     const user = this.getUser();
     if (!user) return { success: false, error: 'Not logged in' };
 
-    const cycles = this.getLocalCycles(user.username);
+    const cycles = this.getLocalCycles(user);
     const newRecord = {
       id: Date.now(),
       user_id: user.username,
@@ -4075,7 +4208,7 @@ class ManagerService {
     };
 
     cycles.unshift(newRecord);
-    this.saveLocalCycles(user.username, cycles);
+    this.saveLocalCycles(user, cycles);
 
     return { success: true, message: 'Saved successfully', record: newRecord };
   }
@@ -4084,7 +4217,7 @@ class ManagerService {
     const user = this.getUser();
     if (!user) return { success: false };
 
-    let cycles = this.getLocalCycles(user.username);
+    let cycles = this.getLocalCycles(user);
     if (cycles.length === 0) return { success: false };
 
     const latest = cycles[0];
@@ -4115,7 +4248,7 @@ class ManagerService {
       latest.symptoms = merged.join(', ');
     }
 
-    this.saveLocalCycles(user.username, cycles);
+    this.saveLocalCycles(user, cycles);
     return { success: true, record: latest };
   }
 
@@ -4123,9 +4256,9 @@ class ManagerService {
     const user = this.getUser();
     if (!user) return { success: false };
 
-    let cycles = this.getLocalCycles(user.username);
+    let cycles = this.getLocalCycles(user);
     cycles = cycles.filter(c => c.id !== cycleId);
-    this.saveLocalCycles(user.username, cycles);
+    this.saveLocalCycles(user, cycles);
 
     return { success: true };
   }
@@ -4133,7 +4266,7 @@ class ManagerService {
   // Clinical Pattern Analytics
   async getAnalytics() {
     const user = this.getUser() || { username: 'Guest', default_cycle_length: 28, default_period_length: 5 };
-    const cycles = this.getLocalCycles(user.username);
+    const cycles = this.getLocalCycles(user);
 
     let totalCycles = cycles.length;
     let avgCycle = user.default_cycle_length || 28;
@@ -5602,7 +5735,7 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             emerald: { primary: '#10b981', light: '#34d399', dark: '#047857', glow: 'rgba(16, 185, 129, 0.28)', grad: 'linear-gradient(135deg, #10b981 0%, #34d399 50%, #047857 100%)' }
         };
 
-        // 💌 Rich Library of 25+ Daily Sweet Support & Affirmation Messages
+        // 💌 Rich Library of 105+ Daily Sweet Support, Hormonal & Affirmation Messages
         const affirmationsList = {
             ar: [
                 { icon: "🌸", text: "أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود هرموني عظيم.. دلعي نفسكِ وخدي راحة النهاردة 💕" },
@@ -5629,7 +5762,87 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                 { icon: "🎵", text: "اسمعي أصوات مريحة أو موسيقى هادية واسترخي.. كل حاجة هتعدي وتبقي أحسن من الأول ✨" },
                 { icon: "💎", text: "أنتِ أغلى حاجة، وصحتكِ وراحتكِ متتعوضش.. دلعي نفسكِ واشربي مشروبكِ المفضل دلوقتي 💕" },
                 { icon: "🎈", text: "ابتسمي يا قمر.. الابتسامة بتفرز هرمون الإندورفين اللي بيسكن الألم طبيعياً 🌸" },
-                { icon: "🌷", text: "يوم جديد، وفرصة تدلعي فيها صحتكِ ونفسيتكِ.. احنا دايماً معاكِ وبندعمكِ في كل خطوة 💕" }
+                { icon: "🌷", text: "يوم جديد، وفرصة تدلعي فيها صحتكِ ونفسيتكِ.. احنا دايماً معاكِ وبندعمكِ في كل خطوة 💕" },
+                { icon: "🌼", text: "صباح الرقة والجمال.. ابدئي يومكِ بكوب ماء دافئ مع عصرة ليمون لإنعاش هرموناتكِ وبشرتكِ ✨" },
+                { icon: "🧘‍♀️", text: "وضعية الجنين مع مخدة بين الركبتين بتخفف الضغط على عضلات الرحم وأسفل الظهر فوراً 💕" },
+                { icon: "🫖", text: "شاي اليانسون والبابونج مهدئ طبيعي للأعصاب ومضاد رائع للانتفاخ والغازات 🌸" },
+                { icon: "🍫", text: "الماغنسيوم في الشوكولاتة الداكنة بيعوض اللي بتفقديه وبيقلل انقباضات الرحم.. كلي قطعة بحب 💕" },
+                { icon: "🎀", text: "مشاعركِ الحساسة النهاردة طبيعية جداً، احتضني نفسكِ برقة لأنكِ إنسانة جميلة وغالية ✨" },
+                { icon: "🌿", text: "أوراق النعناع الطازج في ماء بارد بترطب جسمكِ وتطرد السموم وتخلي مودكِ منتعش 🌸" },
+                { icon: "🍲", text: "شوربة الخضار الدافية بالليمون أو شوربة العدس بتعوض الحديد والطاقة وتدفي عضلات بطنكِ 💕" },
+                { icon: "🕯️", text: "اطفي النور العالي، شغلي إضاءة دافية صفرا، وسيبي عقلكِ يرتاح من التفكير الزايد ✨" },
+                { icon: "🌸", text: "في فترة التبويض، طاقتكِ الإيجابية وجاذبيتكِ بتوصل لأعلى مستوياتها.. استمتعي بيومكِ وتألقي 💕" },
+                { icon: "🧦", text: "تدفئة القدمين بلبس شراب قطني مريح بيساعد في تحسين الدورة الدموية وتقليل تقلصات البطن 🌸" },
+                { icon: "💖", text: "أنتِ بتعملي اللي عليكِ وزيادة، فخورة بيكي وبكل خطوة بتاخديها عشان تحافظي على صحتكِ ✨" },
+                { icon: "🌻", text: "لو حاسة بثقل في جسمكِ، دي مجرد سوائل هرمونية مؤقتة هتختفي بعد أيام معدودة.. خليكِ واثقة في جمالكِ 💕" },
+                { icon: "🍵", text: "مغلي القرفة مع رشة زنجبيل بينظف الرحم وينشط الدورة الدموية ويخلي النزيف مريح 🌸" },
+                { icon: "🧸", text: "خدي قيلولة نص ساعة في نص اليوم.. النوم القصير بيرمم خلايا الدماغ ويجدد نشاطكِ بالكامل ✨" },
+                { icon: "🥗", text: "السبانخ والبروكلي والورقيات الخضراء مليانة حديد وفوليك أسيد لحماية جسمكِ من الأنيميا والدوخة 💕" },
+                { icon: "🌈", text: "كل إحساس متعب بيمر هو مجرد مرحلة عابرة.. بكرة تشرق شمس جديدة وأنتِ في كامل حيويتكِ 🌸" },
+                { icon: "💆‍♀️", text: "تدليك خفيف أسفل السرة بحركات دائرية بزيت اللافندر يسكن المغص في دقائق ✨" },
+                { icon: "🥛", text: "حليب اللوز الدافئ مع رشة قرفة وعسل بيساعد على إفراز السيروتونين للنوم الهادئ والعميق 💕" },
+                { icon: "✨", text: "طاقتكِ أمانة بين إيديكي.. متسمحيش لأي حاجة توتركِ أو تسرق هدوءكِ الداخلي النهاردة 🌸" },
+                { icon: "🌺", text: "حبكِ لجسمكِ واحترامكِ لإشاراته هو أعظم هدية بتقدميها لنفسكِ كل يوم 💕" },
+                { icon: "🍉", text: "البطيخ والخيار والفواكه الغنية بالمياه بتعالج احتباس السوائل وتخلي بشرتكِ نضرة ومشرقة ✨" },
+                { icon: "🦋", text: "التغير سنة الحياة، ودورتكِ الشهرية دليل على تجددكِ وحيويتكِ المستمرة.. يومكِ مليان أمل 🌸" },
+                { icon: "☕", text: "استبدلي القهوة الزايدة بمشروب كاكاو خام دافي بالعسل عشان تحمي عضلات الرحم من التشنج 💕" },
+                { icon: "👑", text: "أنتِ ملكة في بيتكِ وفي يومكِ.. اطلبي المساعدة بدون تردد واستريحي لما تحسي بالتعب ✨" },
+                { icon: "🌙", text: "قبل ما تنامي، اكتبي 3 حاجات ممتنة ليهم النهاردة.. الامتنان بيهدي نبضات القلب ويظبط الهرمونات 🌸" },
+                { icon: "🌸", text: "تذكري إن جسمكِ معجزة إلهية متكاملة، عاملي كل ألم برفق وكل راحة باحتفال 💕" },
+                { icon: "🫖", text: "شاي الميرمية والبردقوش من أعظم أسرار توازن هرمونات الأنوثة وانتظام التبويض ✨" },
+                { icon: "🍎", text: "تفاحة مع حفنة لوز وجوز في السناك بتديكي طاقة ثابتة وتحميكي من هبوط السكر المفاجئ 🌸" },
+                { icon: "🛁", text: "حمام مياه دافية مع ملح إبسوم يمتص كل التشنجات والإرهاق من عضلاتكِ فوراً 💕" },
+                { icon: "💖", text: "أنتِ لستِ عصبية أو مبالغة، دي مجرد تقلبات بروجسترون طبيعية، كوني حنونة على نفسكِ ✨" },
+                { icon: "🧸", text: "قعدة هادية مع حد بتحبيه بتفرز هرمون الأوكسيتوسين المسكن للألم ومهدئ الأعصاب 🌸" },
+                { icon: "🌿", text: "الروزماري والزعتر مغليين بيهدوا الصداع التوتري ويحسنوا التركيز والانتباه 💕" },
+                { icon: "🍓", text: "الفراولة والتوت مليانين فيتامين C اللي بيعزز امتصاص الحديد ويحمي مناعتكِ ✨" },
+                { icon: "🌟", text: "كل دورة بتخليكِ أكثر وعياً بجسمكِ وأنوثتكِ.. يوم سعيد ومريح يا أجمل بنوتة 🌸" },
+                { icon: "🍵", text: "كوباية شمر دافية بعد الأكل بتمنع المغص والانتفاخ وتخلي بطنكِ خفيفة ومستريحة 💕" },
+                { icon: "🕊️", text: "اتنفسي بعمق 4 ثواني، واحبسي 4، وطلعي في 6.. التمرين ده بيهدي الجهاز العصبي في لحظات ✨" },
+                { icon: "🥑", text: "الدهون الصحية زي زيت الزيتون والأفوكادو هي اللبنات الأساسية لبناء هرموناتكِ السليمة 🌸" },
+                { icon: "🎀", text: "دلعي نفسكِ بماسك ترطيب للبشرة النهاردة.. العناية الخارجية بتنعكس على راحة الداخل 💕" },
+                { icon: "🌻", text: "لو دورتكِ اتأخرت شوية، متقلقيش.. التوتر هو أول سبب للتأخير، استرخي وسيبي الطبيعة تاخد مجراها ✨" },
+                { icon: "☕", text: "مشروب الكركم الدافئ مع الحليب ورشة فلفل أسود (اللاتيه الذهبي) أقوى مضاد التهاب طبيعي للرحم 🌸" },
+                { icon: "🍫", text: "حبة شوكولاتة مع كوب ماء مثلج أو دافئ يغير مزاجكِ ويبعث إشارات راحة لدماغكِ 💕" },
+                { icon: "✨", text: "أنتِ تستحقين كل الدعم والاهتمام.. خلي النهاردة يوم الدلال والهدوء التام 🌸" },
+                { icon: "🛌", text: "النوم لـ 8 ساعات كاملة هو العلاج السحري لتنظيم هرمونات الغدة النخامية والمبايض ✨" },
+                { icon: "🌺", text: "جمالكِ مش مرتبط بحالتكِ المزاجية.. أنتِ قمر في كل أوقاتكِ وظروفكِ 💕" },
+                { icon: "🫖", text: "البابونج الساخن قبل النوم كفيل يطرد أي أرق ويخليكي تصحي فايقة ومنتعشة 🌸" },
+                { icon: "💎", text: "صحتكِ النفسية خط أحمر.. حطي حدود مريحة مع أي مجهود زيادة النهاردة ✨" },
+                { icon: "🍲", text: "وجبة خفيفة دافية زي الشوفان بالمكسرات والعسل بتشبع وتمدكِ بطاقة هادية بدون إجهاد للمعدة 💕" },
+                { icon: "🌈", text: "طاقتكِ الهرمونية بتتجدد زي فصول السنة.. احترمي شتاء جسمكِ واستعدي لربيعه 🌸" },
+                { icon: "🧘‍♀️", text: "تمارين التمدد الخفيفة بتفك تشنج الحوض وتخلي الدم يتدفق بسلاسة ✨" },
+                { icon: "❤️", text: "شكراً لجسمكِ اللي شايلكِ وبيحميكي في كل لحظة.. اديله حقه من الحب والرعاية 💕" },
+                { icon: "🍓", text: "العصائر الطازجة الطبيعية بدون سكر هي أحسن وقود لخلاياكِ وبشرتكِ اليوم 🌸" },
+                { icon: "🕯️", text: "وقت الهدوء مع نفسكِ مش تضييع وقت، ده شحن حقيقي لبطاريتكِ وطاقتكِ ✨" },
+                { icon: "🌸", text: "ابتسمي للمرايا وقولي لنفسكِ: أنا قوية، أنا جميلة، وأنا فخورة بيا وبكل حاجة بعملها 💕" },
+                { icon: "🍵", text: "شاي الكمون بالليمون الدافئ يريح المعدة والقولون من أي تقلصات مصاحبة للدورة 🌸" },
+                { icon: "🧸", text: "البسي قطنيات واسعة وألوان مبهجة.. اللبس المريح بيأثر بشكل مباشر على نفسيتكِ ✨" },
+                { icon: "🌟", text: "نجاحكِ مش بس في شغلكِ، نجاحكِ الحقيقي إنك تاخدي بالك من صحتكِ وأنوثتكِ 💕" },
+                { icon: "🥑", text: "بذور الشيا والكتان في الزبادي مليانين أوميجا 3 اللي بتقلل هرمونات الالتهاب والألم 🌸" },
+                { icon: "👑", text: "أنتِ ملهمة وقوية، وكل يوم بتثبتي إنك قد أي تحدي بكل هدوء ورقي ✨" },
+                { icon: "🫖", text: "شاي الكركديه البارد أو الدافئ ينظم ضغط الدم وينعش خلاياكِ بالفيتامينات 💕" },
+                { icon: "🕊️", text: "سيبكِ من أي كلام سلبي النهاردة، ركزي بس في صوت راحتكِ وهدوءكِ الداخلي 🌸" },
+                { icon: "🛁", text: "استرخي في مغطس مياه دافية وخلي كل الإجهاد يذوب تماماً ✨" },
+                { icon: "🎀", text: "يومكِ وردي وجميل.. متنسيش تشربي كوبايتكِ التانية من المياه دلوقتي 💕" },
+                { icon: "🌻", text: "في مرحلة بعد الدورة، استعدي لانطلاقة جديدة في طاقتكِ وإبداعكِ وشغفكِ 🌸" },
+                { icon: "🍲", text: "المشروبات الدافية والأكل الخفيف المتوازن هو مفتاحكِ السحري لراحة القولون والرحم ✨" },
+                { icon: "🍫", text: "استمتعي بالحاجات البسيطة: كوب قهوة مظبوط، قعدة في البلكونة، أو فيلم بتحبيه 💕" },
+                { icon: "🌸", text: "جسمكِ بيعبر عن احتياجاته بالراحة أو النوم.. اسمعي له ومتقاوميش إشاراته 🌸" },
+                { icon: "✨", text: "أنتِ كنز، والاهتمام بنفسكِ هو أحسن استثمار بتعمليه في حياتكِ كلها 💕" },
+                { icon: "🛌", text: "فرشة نوم مريحة ومخدة تحت الضهر هتديكي نوم عميق وتصحيكي بدون أي وجع ضهر ✨" },
+                { icon: "🍯", text: "العسل الأسود بالطحينة أو التمر باللبن مصدر طبيعي فوري للحديد والطاقة السريعة 🌸" },
+                { icon: "🌺", text: "كل نبضة في قلبكِ وكل هرمون في جسمكِ بيشتغلوا عشانكِ.. كوني لطيفة معاهم 💕" },
+                { icon: "🎵", text: "شغلي صوت شتا أو أصوات طبيعة هادية وخلي جهازكِ العصبي يرتاح تماماً ✨" },
+                { icon: "💎", text: "أنتِ نادرة ومميزة.. حبي كل تفصيلة فيكي وافتخري بأنوثتكِ وجمالكِ 🌸" },
+                { icon: "🍵", text: "القرنفل مع النعناع والزنجبيل مزيج مسكن قوي ومطهر طبيعي للبطن 💕" },
+                { icon: "🌈", text: "الأيام الصعبة بتعدي، والراحة بتيجي، وأنتِ بتطلعي منها دايماً أقوى وأجمل ✨" },
+                { icon: "❤️", text: "أنا سارة، رفيقتكِ الذكية وأختكِ المقربة.. أنا جنبكِ دايماً وبفكركِ إنك محبوبة وغالية أوي 💕" },
+                { icon: "🌸", text: "صباح التفاؤل والجمال.. خدي نفس عميق وابدئي يومكِ بابتسامة وثقة في نفسكِ ✨" },
+                { icon: "🍓", text: "الترطيب هو سر النضارة.. اشربي كوب ماء دلوقتي وادعيلي ببشرة صافية ولامعة 💕" },
+                { icon: "👑", text: "طاقتكِ اليوم إيجابية وتشع نور.. انشري محبتكِ وخلي يومكِ مبهج ومميز 🌸" },
+                { icon: "🧸", text: "أنتِ تستحقي كل الدلال والراحة.. كوني رحيمة بنفسكِ واحتفلي بكل إنجاز صغير اليوم ✨" },
+                { icon: "💖", text: "أنتِ في أمان، وصحتكِ في أمان.. يومكِ مليان سكينة وبركة وفرحة لقلبكِ يا جميلة 💕" }
             ],
             en: [
                 { icon: "🌸", text: "You are truly wonderful and strong! Your body is doing incredible hormonal work, take gentle rest today 💕" },
@@ -5641,25 +5854,33 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                 { icon: "🛌", text: "An early, restful night in a quiet room will harmonize your melatonin and estrogen beautifully 💕" },
                 { icon: "🍓", text: "Hydrate with warm water and antioxidant berries to support your skin and natural glow 🌸" },
                 { icon: "✨", text: "You don't have to conquer everything today. Self-care is your highest productivity 💕" },
-                { icon: "🕯️", text: "Light a calming lavender candle, breathe deeply, and allow your muscles to melt into peace ✨" }
+                { icon: "🕯️", text: "Light a calming lavender candle, breathe deeply, and allow your muscles to melt into peace ✨" },
+                { icon: "🥑", text: "Healthy fats like avocado and walnuts nourish your hormones and stabilize mood ✨" },
+                { icon: "🌼", text: "Celebrate small self-care victories today. You are doing wonderfully 💕" }
             ],
             fr: [
                 { icon: "🌸", text: "Vous êtes exceptionnelle et forte ! Votre corps accomplit un travail magnifique, reposez-vous 💕" },
                 { icon: "☕", text: "Il est tout à fait normal de se sentir fatiguée. Savourez une tisane chaude à la cannelle ✨" },
                 { icon: "🍫", text: "Un morceau de chocolat noir et une bouillotte douce illumineront votre journée 💕" },
-                { icon: "👑", text: "Vous traversez chaque cycle avec grâce et courage. Soyez fière de vous aujourd'hui 💕" }
+                { icon: "👑", text: "Vous traversez chaque cycle avec grâce et courage. Soyez fière de vous aujourd'hui 💕" },
+                { icon: "🌿", text: "Prenez le temps de respirer profondément et d'écouter les besoins de votre corps ✨" },
+                { icon: "🍓", text: "Hydratez-vous abondamment et offrez-vous un moment de douceur absolue 💕" }
             ],
             de: [
                 { icon: "🌸", text: "Du bist außergewöhnlich und stark! Dein Körper leistet Großartiges, gönne dir heute Ruhe 💕" },
                 { icon: "☕", text: "Es ist völlig in Ordnung, müde zu sein. Genieße einen warmen Kräutertee und entspanne dich ✨" },
                 { icon: "🍫", text: "Ein Stück dunkle Schokolade und eine warme Wärmflasche verschönern deinen Tag 💕" },
-                { icon: "👑", text: "Du meisterst jeden Zyklus mit Stärke und Eleganz. Pass heute gut auf dich auf 💕" }
+                { icon: "👑", text: "Du meisterst jeden Zyklus mit Stärke und Eleganz. Pass heute gut auf dich auf 💕" },
+                { icon: "🌿", text: "Gönne dir Pausen und achte liebevoll auf deine hormonelle Balance ✨" },
+                { icon: "🍓", text: "Trinke viel warmes Wasser und schenke dir heute selbst Wohlbefinden 💕" }
             ],
             sw: [
                 { icon: "🌸", text: "Wewe ni wa pekee na shupavu! Mwili wako unafanya kazi nzuri, pumzika kwa upendo leo 💕" },
                 { icon: "☕", text: "Ni kawaida kujisikia umechoka. Kunywa chai ya mdalasini ya joto na upumzishe misuli yako ✨" },
                 { icon: "🍫", text: "Chokoleti nyeusi na utulivu wa chupa ya maji ya moto vitafanya siku yako kuwa nzuri 💕" },
-                { icon: "👑", text: "Unakabiliana na kila mzunguko kwa hekima na nguvu. Tunajivunia wewe 💕" }
+                { icon: "👑", text: "Unakabiliana na kila mzunguko kwa hekima na nguvu. Tunajivunia wewe 💕" },
+                { icon: "🌿", text: "Kunywa maji ya kutosha na ufurahie amani ya mwili wako leo ✨" },
+                { icon: "🍓", text: "Jipende na ujitunze kwa upendo katika kila hatua ya mzunguko wako 💕" }
             ]
         };
 
@@ -5918,8 +6139,53 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const textEl = document.getElementById('affirmationText');
             if (iconEl && rand) iconEl.innerText = rand.icon;
             if (textEl && rand) textEl.innerText = rand.text;
+            if (typeof document !== 'undefined' && document.querySelectorAll) {
+                try {
+                    document.querySelectorAll('.affirmation-icon').forEach(el => { if (rand) el.innerText = rand.icon; });
+                    document.querySelectorAll('.affirmation-text').forEach(el => { if (rand) el.innerText = rand.text; });
+                } catch(e) {}
+            }
         }
         window.getRandomAffirmation = getRandomAffirmation;
+
+        async function checkDailyAffirmationPushNotification() {
+            try {
+                if (typeof window === 'undefined' || !window.Notification || window.Notification.permission !== 'granted') return;
+                const todayStr = new Date().toISOString().split('T')[0];
+                const lastPush = localStorage.getItem('safe_last_daily_affirmation_push');
+                if (lastPush === todayStr) return;
+
+                const list = affirmationsList[currentLang] || affirmationsList['en'];
+                if (!list || list.length === 0) return;
+
+                const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+                const item = list[dayOfYear % list.length] || list[0];
+
+                const title = currentLang === 'ar' ? '🌸 رسالة اليوم من سارة 💕' : '🌸 Daily Care from Sarah 💕';
+                const body = `${item.icon} ${item.text}`;
+
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const reg = await navigator.serviceWorker.ready;
+                        await reg.showNotification(title, {
+                            body: body,
+                            icon: 'icon.svg',
+                            badge: 'icon.svg',
+                            tag: 'safe-daily-affirmation',
+                            vibrate: [150, 80, 150]
+                        });
+                        localStorage.setItem('safe_last_daily_affirmation_push', todayStr);
+                        return;
+                    } catch (swErr) {}
+                }
+
+                try {
+                    new window.Notification(title, { body: body, icon: 'icon.svg' });
+                    localStorage.setItem('safe_last_daily_affirmation_push', todayStr);
+                } catch (notifErr) {}
+            } catch (err) {}
+        }
+        window.checkDailyAffirmationPushNotification = checkDailyAffirmationPushNotification;
 
         window.openNotificationsModal = function() {
             document.getElementById('notificationsModal').style.display = 'flex';
@@ -6450,6 +6716,7 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     if (headerNotifyBtn) headerNotifyBtn.classList.remove('has-alert');
                     if (drawerAlertDot) drawerAlertDot.style.display = 'none';
                 }
+                checkDailyAffirmationPushNotification();
             } catch (err) {}
         }
 
