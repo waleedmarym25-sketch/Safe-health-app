@@ -71,14 +71,18 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const email = (req.query.email || '').trim().toLowerCase();
-      if (!email) {
-        return res.status(400).json({ success: false, error: 'Email query parameter required' });
+      const identifier = (req.query.email || req.query.identifier || req.query.username || '').trim().toLowerCase();
+      if (!identifier) {
+        return res.status(400).json({ success: false, error: 'Email or identifier query parameter required' });
       }
 
       if (supabaseUrl && supabaseKey) {
         try {
-          const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault?email=eq.${encodeURIComponent(email)}&select=*`, {
+          const filter = identifier.includes('@')
+            ? `email=eq.${encodeURIComponent(identifier)}`
+            : `or=(email.eq.${encodeURIComponent(identifier)},user_data->>username.eq.${encodeURIComponent(identifier)})`;
+
+          const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault?${filter}&select=*`, {
             headers: {
               'apikey': supabaseKey,
               'Authorization': `Bearer ${supabaseKey}`
@@ -94,6 +98,12 @@ export default async function handler(req, res) {
                 user: record.user_data,
                 cycles: record.cycles_data || []
               });
+            } else {
+              return res.status(200).json({
+                success: false,
+                notFound: true,
+                message: 'Account not found in cloud'
+              });
             }
           }
         } catch (err) {
@@ -105,7 +115,7 @@ export default async function handler(req, res) {
         success: true,
         cloud: 'local-first',
         message: 'Ready for client sync',
-        email
+        email: identifier
       });
     }
 

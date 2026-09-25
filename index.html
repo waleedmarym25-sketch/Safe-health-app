@@ -789,7 +789,7 @@
         body.dark-mode .btn-delete { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
 
         /* Auth View */
-        .auth-container { max-width: 480px; width: 100%; margin: 30px auto; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--card-shadow); overflow: hidden; }
+        .auth-container { max-width: 480px; width: 100%; margin: 36px auto; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--card-shadow); overflow: hidden; }
         .auth-header { background: linear-gradient(135deg, var(--primary-glow), rgba(245, 158, 11, 0.12)); padding: 24px; text-align: center; border-bottom: 1px solid var(--border-color); }
         .auth-header h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 4px; font-family: 'Playfair Display', 'Cairo', serif; }
         body.dark-mode .auth-header h2 { color: var(--primary-light); }
@@ -801,7 +801,7 @@
         .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); }
         .form-control { padding: 11px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); outline: none; font-size: 0.92rem; background: var(--input-bg); color: var(--text-primary); }
         .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .btn-primary { width: 100%; padding: 12px; background: var(--primary-gradient); color: white; border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px var(--primary-glow); display: flex; align-items: center; justify-content: center; gap: 8px; }
 
         /* 🎙️ Voice Microphone in Chat */
@@ -4024,6 +4024,10 @@ class ManagerService {
     }
 
     const cleanId = (identifier || '').trim().toLowerCase();
+    if (!cleanId) {
+      return { success: false, error: 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني / Identifier required' };
+    }
+
     const users = this.getLocalUsers();
     let foundUser = null;
 
@@ -4035,10 +4039,10 @@ class ManagerService {
       }
     }
 
-    // If not found in local users and is email, try restoring from Cloud API
-    if (!foundUser && cleanId.includes('@')) {
+    // If not found in local users, query Cloud Sync API by email or username
+    if (!foundUser) {
       try {
-        const cloudRes = await fetch(`/api/sync?email=${encodeURIComponent(cleanId)}`);
+        const cloudRes = await fetch(`/api/sync?email=${encodeURIComponent(cleanId)}&identifier=${encodeURIComponent(cleanId)}`);
         if (cloudRes.ok) {
           const cloudData = await cloudRes.json();
           if (cloudData.success && cloudData.user) {
@@ -4055,29 +4059,18 @@ class ManagerService {
     }
 
     if (!foundUser) {
-      if (cleanId) {
-        const isEmail = cleanId.includes('@');
-        const defaultName = isEmail ? cleanId.split('@')[0] : identifier.trim();
-        foundUser = {
-          id: Date.now(),
-          username: defaultName,
-          display_name: defaultName,
-          email: isEmail ? cleanId : `${cleanId}@safe.app`,
-          password: password || '123456',
-          age: 24,
-          weight: 60,
-          height: 165,
-          bmi: 22.0,
-          default_cycle_length: 28,
-          default_period_length: 5,
-          created_at: new Date().toISOString()
-        };
-        users[foundUser.username.toLowerCase()] = foundUser;
-        if (foundUser.email) users[foundUser.email.toLowerCase()] = foundUser;
-        this.saveLocalUsers(users);
-      } else {
-        return { success: false, error: 'بيانات الدخول غير صحيحة / Invalid credentials' };
-      }
+      return {
+        success: false,
+        error: 'لم يتم العثور على الحساب. يرجى التأكد من البريد أو إنشاء حساب جديد من تبويب «إنشاء حساب» / Account not found. Please check your credentials or create an account.'
+      };
+    }
+
+    // Validate password if configured
+    if (foundUser.password && password && foundUser.password !== password) {
+      return {
+        success: false,
+        error: 'كلمة المرور غير صحيحة، يرجى التأكد والمحاولة مجدداً / Incorrect password'
+      };
     }
 
     const token = 'safe_token_' + Date.now();
@@ -4123,11 +4116,13 @@ class ManagerService {
       bmi = parseFloat((userWeight / ((userHeight / 100) * (userHeight / 100))).toFixed(1));
     }
 
+    const cleanEmail = (userData.email || '').trim().toLowerCase();
+
     const newUser = {
       id: Date.now(),
       username: username,
       display_name: userData.display_name || username,
-      email: userData.email || '',
+      email: cleanEmail,
       password: userData.password || '123456',
       age: userAge,
       weight: userWeight,
@@ -4139,11 +4134,15 @@ class ManagerService {
     };
 
     users[username.toLowerCase()] = newUser;
+    if (cleanEmail) users[cleanEmail] = newUser;
     this.saveLocalUsers(users);
 
     const token = 'safe_token_' + Date.now();
     this.setToken(token);
     this.setUser(newUser);
+
+    // Auto-sync new account to cloud
+    this.syncWithCloud().catch(() => {});
 
     return { success: true, token, user: newUser };
   }
@@ -6742,6 +6741,11 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const identifier = (document.getElementById('loginIdentifier')?.value || '').trim();
             const password = document.getElementById('loginPassword')?.value || '';
 
+            if (!identifier) {
+                alert(currentLang === 'ar' ? 'يرجى إدخال البريد الإلكتروني أو اسم المستخدم' : 'Please enter your email or username');
+                return;
+            }
+
             try {
                 const data = await managerService.login(identifier, password);
                 if (data && data.success) {
@@ -6751,17 +6755,8 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     alert((data && data.error) || (currentLang === 'ar' ? 'فشل تسجيل الدخول' : 'Login failed'));
                 }
             } catch (err) {
-                console.warn('Direct login fallback:', err);
-                const fallbackUser = {
-                    id: Date.now(),
-                    username: identifier || 'User',
-                    display_name: identifier || 'User',
-                    age: 24, weight: 60, height: 165, bmi: 22.0,
-                    default_cycle_length: 28, default_period_length: 5
-                };
-                managerService.setUser(fallbackUser);
-                currentUser = fallbackUser;
-                showAppView();
+                console.warn('Login error:', err);
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء محاولة تسجيل الدخول، يرجى المحاولة مجدداً' : 'Error logging in, please try again.');
             }
         };
 
@@ -6776,6 +6771,11 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const height = document.getElementById('regHeight')?.value || 165;
             const email = document.getElementById('regEmail')?.value?.trim() || '';
             const password = document.getElementById('regPassword')?.value || '123456';
+
+            if (!email) {
+                alert(currentLang === 'ar' ? 'يرجى إدخال البريد الإلكتروني لحفظ واسترجاع الحساب من أي جهاز' : 'Please enter your email to enable cross-device account sync');
+                return;
+            }
 
             try {
                 const data = await managerService.register({
@@ -6794,21 +6794,8 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     alert((data && data.error) || (currentLang === 'ar' ? 'فشل إنشاء الحساب' : 'Registration failed'));
                 }
             } catch (err) {
-                console.warn('Direct registration fallback:', err);
-                const fallbackUser = {
-                    id: Date.now(),
-                    username: username || 'User',
-                    display_name: displayName || username || 'User',
-                    age: parseInt(age) || 24,
-                    weight: parseFloat(weight) || 60,
-                    height: parseFloat(height) || 165,
-                    bmi: 22.0,
-                    default_cycle_length: 28,
-                    default_period_length: 5
-                };
-                managerService.setUser(fallbackUser);
-                currentUser = fallbackUser;
-                showAppView();
+                console.warn('Registration error:', err);
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء إنشاء الحساب، يرجى المحاولة مجدداً' : 'Error creating account, please try again.');
             }
         };
 
