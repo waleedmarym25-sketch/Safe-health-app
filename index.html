@@ -205,18 +205,8 @@
             transform: translateY(-1px);
         }
         .drawer-alert-dot {
-            width: 8px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 50%;
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            box-shadow: 0 0 6px #ef4444;
-            animation: pulseDot 1.5s infinite;
-            display: none;
+            display: none !important;
         }
-        @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
 
         /* 🌟 Slide-out Side Drawer & Backdrop Overlay */
         .drawer-overlay {
@@ -540,7 +530,7 @@
 
         @media (max-width: 768px) {
             .desktop-tabs { display: none !important; }
-            .theme-palette-picker { display: none !important; }
+            .header-palette-picker { display: none !important; }
             .side-panel { display: none !important; }
             .chat-grid { display: block !important; }
             .container { padding: 10px 8px calc(74px + env(safe-area-inset-bottom)) 8px !important; gap: 12px !important; }
@@ -1090,6 +1080,11 @@
                 <span id="themeIcon">🌙</span>
             </button>
 
+            <!-- Quick Theme Color Button -->
+            <button class="btn-header-action" onclick="toggleAppDrawer(true)" title="تغيير لون وثيم التطبيق / Theme Colors">
+                <span>🎨</span>
+            </button>
+
             <!-- User Quick Pill (Desktop) -->
             <div class="user-pill desktop-only" id="userPill" onclick="toggleAppDrawer(true)" style="cursor: pointer;">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -1100,7 +1095,6 @@
             <button class="btn-drawer-toggle" id="headerMenuBtn" onclick="toggleAppDrawer(true)" title="القائمة الرئيسية / Menu">
                 <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 <span class="drawer-toggle-text" data-i18n="drawerMenuBtn">القائمة</span>
-                <span class="drawer-alert-dot" id="drawerAlertDot"></span>
             </button>
         </div>
     </header>
@@ -1222,6 +1216,15 @@
                     <div class="btn-left">
                         <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                         <span data-i18n="drawerHistoryBtn">📋 سجلات وحذف الدورات</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- 🔄 Cross-Device Account Sync Button -->
+                <button class="drawer-nav-btn" onclick="openSyncModal(); toggleAppDrawer(false);" title="Sync across Phone & Laptop">
+                    <div class="btn-left">
+                        <span>🔄</span>
+                        <span data-i18n="btnCrossDeviceSync">مزامنة الحساب بين الهاتف واللابتوب 📱⇄💻</span>
                     </div>
                     <span>➔</span>
                 </button>
@@ -1548,6 +1551,78 @@
         </div>
     </div>
 
+    <!-- 🔄 Cross-Device Account Sync Modal -->
+    <div class="modal-overlay" id="syncModal" onclick="closeSyncModal(event)">
+        <div class="modal-card" style="max-width: 580px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>
+                    <span>🔄</span>
+                    <span data-i18n="syncModalTitle">مزامنة ونقل الحساب بين الموبايل واللابتوب</span>
+                </h3>
+                <button class="btn-close-modal" onclick="closeSyncModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;" data-i18n="syncModalSub">
+                    🔒 <strong>أمان وخصوصية تامة:</strong> تطبيق SAFE يحفظ بياناتكِ محلياً على جهازكِ. لنقل كافة دوراتكِ وتفاصيل ملفكِ الصحي وسجلاتكِ بين الهاتف والكمبيوتر، استخدمي كود المزامنة السريع:
+                </p>
+
+                <!-- SECTION A: Export Sync Code -->
+                <div style="background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 0.9rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                        <span>📤</span>
+                        <span data-i18n="syncExportTitle">1. تصدير بيانات حسابكِ من هذا الجهاز:</span>
+                    </div>
+                    <textarea id="syncExportCodeArea" class="form-control" rows="3" readonly style="font-family: monospace; font-size: 0.78rem; background: var(--surface); color: var(--text-secondary); resize: none;"></textarea>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-primary" style="flex: 1; padding: 9px 14px;" onclick="copyAccountSyncCode()">
+                            <span>📋</span>
+                            <span data-i18n="btnCopySyncCode">نسخ كود المزامنة (1-Click Copy)</span>
+                        </button>
+                        <button type="button" class="btn-action" style="padding: 9px 14px;" onclick="exportBackup()">
+                            <span>💾</span>
+                            <span data-i18n="btnDownloadBackupJson">تحميل ملف النسخ الاحتياطي (.json)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECTION B: Import Sync Code -->
+                <div style="background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="font-size: 0.9rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                        <span>📥</span>
+                        <span data-i18n="syncImportTitle">2. استيراد وتفعيل الحساب على هذا الجهاز:</span>
+                    </div>
+                    <textarea id="syncImportCodeArea" class="form-control" rows="3" placeholder="الصقي كود المزامنة هنا (SAFE_SYNC_...)" style="font-family: monospace; font-size: 0.78rem; resize: none;"></textarea>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-primary" style="flex: 1; padding: 9px 14px;" onclick="applyAccountSyncCode()">
+                            <span>🚀</span>
+                            <span data-i18n="btnApplySyncCode">تفعيل واستيراد البيانات فوراً</span>
+                        </button>
+                        <button type="button" class="btn-action" style="padding: 9px 14px;" onclick="document.getElementById('importBackupInput').click()">
+                            <span>📂</span>
+                            <span data-i18n="btnUploadBackupJson">رفع ملف .json</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Instructions Checklist -->
+                <div class="checklist-grid" style="grid-template-columns: 1fr;">
+                    <div class="check-item">
+                        <span>📱</span>
+                        <span data-i18n="syncStep1"><strong>الخطوة 1:</strong> على جهازكِ الذي يحتوي بياناتكِ (مثلاً الموبايل)، اضغطي زر <em>"نسخ كود المزامنة"</em>.</span>
+                    </div>
+                    <div class="check-item">
+                        <span>💬</span>
+                        <span data-i18n="syncStep2"><strong>الخطوة 2:</strong> أرسلي الكود لنفسكِ (عبر واتساب أو تليجرام أو مسودة إيميل).</span>
+                    </div>
+                    <div class="check-item">
+                        <span>💻</span>
+                        <span data-i18n="syncStep3"><strong>الخطوة 3:</strong> على جهازكِ الآخر (مثلاً اللابتوب)، افتحي نفس النافذة والصقي الكود واضغطي <em>"تفعيل واستيراد"</em>.. وستنتقل كافة الدورات والتحليلات فوراً!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 📄 Doctor Medical Report Modal -->
     <div class="modal-overlay" id="medicalReportModal" onclick="closeMedicalReportModal(event)">
         <div class="modal-card" style="max-width: 680px;" onclick="event.stopPropagation()">
@@ -1702,69 +1777,8 @@
         <!-- ============================================== -->
         <!-- 2. MAIN APP VIEW -->
         <!-- ============================================== -->
-        <div id="mainAppView" style="display: flex; flex-direction: column; gap: 20px;">
+        <div id="mainAppView" style="display: flex; flex-direction: column; gap: 16px;">
             
-            <!-- 💌 Daily Support Affirmation Box (Rich Library 25+ Messages) -->
-            <div class="encouragement-card">
-                <div class="affirmation-content">
-                    <div class="affirmation-icon" id="affirmationIcon">🌸</div>
-                    <div>
-                        <div class="affirmation-text" id="affirmationText">
-                            أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود رائع.. دلعي نفسكِ وخدي راحة النهاردة 💕
-                        </div>
-                        <div class="affirmation-sub" id="affirmationSub" data-i18n="affirmationSub">
-                            رسالة تشجيعية يومية مخصصة لدعمكِ وراحتكِ النفسية
-                        </div>
-                    </div>
-                </div>
-                <button class="btn-new-affirmation" onclick="getRandomAffirmation(true)">
-                    ✨ <span data-i18n="btnNewAffirmation">رسالة جديدة</span>
-                </button>
-            </div>
-
-
-            <!-- 🌸 5-Day Pre-Period / Ovulation Smart Warning Alert Banner -->
-            <div class="notification-alert-box" id="prePeriodAlertBox" onclick="openNotificationsModal()">
-                <div class="alert-header-row">
-                    <span class="alert-badge">
-                        <svg class="icon" viewBox="0 0 24 24" style="stroke:white;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                        <span id="alertBadgeText">تنبيه استعداد مسبق</span>
-                    </span>
-                    <span style="font-size: 0.78rem; color: var(--text-secondary); text-decoration: underline;">🔔 فتح مركز التنبيهات</span>
-                </div>
-                <div class="alert-title" id="alertTitleText">🌸 تنبيه الاستعداد للدورة</div>
-                <div class="alert-desc" id="alertDescText">لا تنسي الاعتناء بنفسكِ 💕 (اضغطي هنا لعرض كافة التفاصيل والقائمة)</div>
-                <div class="checklist-grid" id="checklistGrid" onclick="event.stopPropagation()"></div>
-            </div>
-
-            <!-- 🌿 Irregular Cycle Support Card -->
-            <div class="irregular-support-box" id="irregularSupportCard">
-                <div class="irregular-support-title">
-                    <span>👑</span>
-                    <span id="irregularHeadline">نصائح ودعم لعدم انتظام الدورة الشهرية</span>
-                </div>
-                <div class="irregular-support-text" id="irregularSupportText">
-                    لا تقلقي يا جميلة 💕 التفاوت في طول الدورة أمر طبيعي وشائع جداً بتأثير التوتر أو تغير نمط النوم أو الوزن.
-                </div>
-                <div class="checklist-grid" id="irregularTipsGrid"></div>
-            </div>
-
-            <!-- User Welcome Banner -->
-            <div class="user-banner">
-                <div class="user-banner-info">
-                    <div class="user-avatar" id="bannerAvatar">
-                        <svg class="icon icon-lg" viewBox="0 0 24 24" stroke="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="white"></path></svg>
-                    </div>
-                    <div>
-                        <div class="user-banner-title" id="bannerWelcomeText">مرحباً بكِ مجدداً!</div>
-                        <div class="user-banner-sub" id="bannerUserStats">جاري تحميل سجلاتكِ الخاصة...</div>
-                    </div>
-                </div>
-                <div>
-                    <span class="badge badge-gold" id="bannerRegularity" data-i18n="regularCycle">دورة منتظمة ومثالية</span>
-                </div>
-            </div>
-
             <!-- Desktop Navigation Tabs -->
             <nav class="desktop-tabs">
                 <button class="tab-btn active" onclick="switchTab('chatTab', event)">
@@ -1933,6 +1947,66 @@
 
             <!-- VIEW 3: Personalized Dashboard & Analytics -->
             <section id="dashboardTab" class="tab-content">
+                <!-- User Welcome Banner -->
+                <div class="user-banner" style="margin-bottom: 16px;">
+                    <div class="user-banner-info">
+                        <div class="user-avatar" id="bannerAvatar">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24" stroke="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="white"></path></svg>
+                        </div>
+                        <div>
+                            <div class="user-banner-title" id="bannerWelcomeText">مرحباً بكِ مجدداً!</div>
+                            <div class="user-banner-sub" id="bannerUserStats">جاري تحميل سجلاتكِ الخاصة...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge badge-gold" id="bannerRegularity" data-i18n="regularCycle">دورة منتظمة ومثالية</span>
+                    </div>
+                </div>
+
+                <!-- 💌 Daily Support Affirmation Box -->
+                <div class="encouragement-card" style="margin-bottom: 16px;">
+                    <div class="affirmation-content">
+                        <div class="affirmation-icon" id="affirmationIcon">🌸</div>
+                        <div>
+                            <div class="affirmation-text" id="affirmationText">
+                                أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود رائع.. دلعي نفسكِ وخدي راحة النهاردة 💕
+                            </div>
+                            <div class="affirmation-sub" id="affirmationSub" data-i18n="affirmationSub">
+                                رسالة تشجيعية يومية مخصصة لدعمكِ وراحتكِ النفسية
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-new-affirmation" onclick="getRandomAffirmation(true)">
+                        ✨ <span data-i18n="btnNewAffirmation">رسالة جديدة</span>
+                    </button>
+                </div>
+
+                <!-- 🌸 5-Day Pre-Period / Ovulation Smart Warning Alert Banner -->
+                <div class="notification-alert-box" id="prePeriodAlertBox" onclick="openNotificationsModal()" style="margin-bottom: 16px;">
+                    <div class="alert-header-row">
+                        <span class="alert-badge">
+                            <svg class="icon" viewBox="0 0 24 24" style="stroke:white;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span id="alertBadgeText">تنبيه استعداد مسبق</span>
+                        </span>
+                        <span style="font-size: 0.78rem; color: var(--text-secondary); text-decoration: underline;">🔔 فتح مركز التنبيهات</span>
+                    </div>
+                    <div class="alert-title" id="alertTitleText">🌸 تنبيه الاستعداد للدورة</div>
+                    <div class="alert-desc" id="alertDescText">لا تنسي الاعتناء بنفسكِ 💕 (اضغطي هنا لعرض كافة التفاصيل والقائمة)</div>
+                    <div class="checklist-grid" id="checklistGrid" onclick="event.stopPropagation()"></div>
+                </div>
+
+                <!-- 🌿 Irregular Cycle Support Card -->
+                <div class="irregular-support-box" id="irregularSupportCard" style="margin-bottom: 16px;">
+                    <div class="irregular-support-title">
+                        <span>👑</span>
+                        <span id="irregularHeadline">نصائح ودعم لعدم انتظام الدورة الشهرية</span>
+                    </div>
+                    <div class="irregular-support-text" id="irregularSupportText">
+                        لا تقلقي يا جميلة 💕 التفاوت في طول الدورة أمر طبيعي وشائع جداً بتأثير التوتر أو تغير نمط النوم أو الوزن.
+                    </div>
+                    <div class="checklist-grid" id="irregularTipsGrid"></div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
                     <div class="card">
                         <div class="card-header">
@@ -2497,7 +2571,19 @@ const ALL_LOCALES = {
     drawerThemesLabel: "ثيم وألوان المنصة:",
     drawerLangLabel: "لغة الواجهة (Language):",
     drawerHistoryBtn: "📋 سجلات وحذف الدورات",
-    btnViewAllHistory: "📋 إدارة وحذف السجلات بالتفصيل"
+    btnViewAllHistory: "📋 إدارة وحذف السجلات بالتفصيل",
+    btnCrossDeviceSync: "مزامنة الحساب بين الهاتف واللابتوب",
+    syncModalTitle: "مزامنة ونقل الحساب بين الموبايل واللابتوب",
+    syncModalSub: "🔒 <strong>أمان وخصوصية تامة:</strong> تطبيق SAFE يحفظ بياناتكِ محلياً على جهازكِ. لنقل كافة دوراتكِ وتفاصيل ملفكِ الصحي وسجلاتكِ بين الهاتف والكمبيوتر، استخدمي كود المزامنة السريع:",
+    syncExportTitle: "1. تصدير بيانات حسابكِ من هذا الجهاز:",
+    btnCopySyncCode: "نسخ كود المزامنة (1-Click Copy)",
+    btnDownloadBackupJson: "تحميل ملف النسخ الاحتياطي (.json)",
+    syncImportTitle: "2. استيراد وتفعيل الحساب على هذا الجهاز:",
+    btnApplySyncCode: "تفعيل واستيراد البيانات فوراً",
+    btnUploadBackupJson: "رفع ملف .json",
+    syncStep1: "<strong>الخطوة 1:</strong> على جهازكِ الذي يحتوي بياناتكِ (مثلاً الموبايل)، اضغطي زر <em>\"نسخ كود المزامنة\"</em>.",
+    syncStep2: "<strong>الخطوة 2:</strong> أرسلي الكود لنفسكِ (عبر واتساب أو تليجرام أو مسودة إيميل).",
+    syncStep3: "<strong>الخطوة 3:</strong> على جهازكِ الآخر (مثلاً اللابتوب)، افتحي نفس النافذة والصقي الكود واضغطي <em>\"تفعيل واستيراد\"</em>.. وستنتقل كافة الدورات والتحليلات فوراً!"
   },
   en: {
     appTitle: "SAFE Period Tracker",
@@ -2716,7 +2802,19 @@ const ALL_LOCALES = {
     drawerThemesLabel: "Theme & Accent Color:",
     drawerLangLabel: "Interface Language:",
     drawerHistoryBtn: "📋 Cycle History & Deletion",
-    btnViewAllHistory: "📋 Manage & Delete Detailed Records"
+    btnViewAllHistory: "📋 Manage & Delete Detailed Records",
+    btnCrossDeviceSync: "Sync Account (Phone & Laptop)",
+    syncModalTitle: "Cross-Device Account Sync",
+    syncModalSub: "🔒 <strong>Private & Local:</strong> SAFE stores your data securely on this device. To seamlessly sync all your recorded cycles, profile, and history between your phone and computer, use your 1-click sync code:",
+    syncExportTitle: "1. Export Account Data from this Device:",
+    btnCopySyncCode: "Copy Sync Code (1-Click Copy)",
+    btnDownloadBackupJson: "Download Backup File (.json)",
+    syncImportTitle: "2. Import & Activate Account on this Device:",
+    btnApplySyncCode: "Activate & Import Data Now",
+    btnUploadBackupJson: "Upload .json Backup File",
+    syncStep1: "<strong>Step 1:</strong> On your active device (e.g. your phone), tap <em>\"Copy Sync Code\"</em>.",
+    syncStep2: "<strong>Step 2:</strong> Send the code to yourself (via WhatsApp, Notes, or Email).",
+    syncStep3: "<strong>Step 3:</strong> On your second device (e.g. your laptop), paste the code here and click <em>\"Activate & Import Data\"</em>!"
   },
   fr: {
     appTitle: "SAFE Suivi des Règles",
@@ -2935,7 +3033,19 @@ const ALL_LOCALES = {
     drawerThemesLabel: "Thème et Couleurs :",
     drawerLangLabel: "Langue de l'interface :",
     drawerHistoryBtn: "📋 Historique & Suppression des Cycles",
-    btnViewAllHistory: "📋 Gérer & Supprimer les Enregistrements Détaillés"
+    btnViewAllHistory: "📋 Gérer & Supprimer les Enregistrements Détaillés",
+    btnCrossDeviceSync: "Synchroniser le Compte (Mobile & PC)",
+    syncModalTitle: "Synchronisation Multi-Appareils",
+    syncModalSub: "🔒 <strong>Privé & Local :</strong> SAFE enregistre vos données en toute sécurité sur cet appareil. Pour synchroniser vos cycles et antécédents entre votre téléphone et votre ordinateur :",
+    syncExportTitle: "1. Exporter les données de cet appareil :",
+    btnCopySyncCode: "Copier le code de synchronisation",
+    btnDownloadBackupJson: "Télécharger le fichier de sauvegarde (.json)",
+    syncImportTitle: "2. Importer et activer sur cet appareil :",
+    btnApplySyncCode: "Activer et importer les données",
+    btnUploadBackupJson: "Charger un fichier .json",
+    syncStep1: "<strong>Étape 1 :</strong> Sur votre appareil actif (ex: téléphone), cliquez sur <em>« Copier le code »</em>.",
+    syncStep2: "<strong>Étape 2 :</strong> Envoyez-vous le code (via WhatsApp, e-mail ou bloc-notes).",
+    syncStep3: "<strong>Étape 3 :</strong> Sur votre ordinateur, collez le code et cliquez sur <em>« Activer et importer »</em> !"
   },
   de: {
     appTitle: "SAFE Perioden-Tracker",
@@ -3154,7 +3264,19 @@ const ALL_LOCALES = {
     drawerThemesLabel: "Design & Akzentfarben:",
     drawerLangLabel: "Sprache der Benutzeroberfläche:",
     drawerHistoryBtn: "📋 Zyklusverlauf & Einträge löschen",
-    btnViewAllHistory: "📋 Detaillierte Einträge verwalten & löschen"
+    btnViewAllHistory: "📋 Detaillierte Einträge verwalten & löschen",
+    btnCrossDeviceSync: "Konto synchronisieren (Smartphone & PC)",
+    syncModalTitle: "Geräteübergreifende Synchronisierung",
+    syncModalSub: "🔒 <strong>Privat & Lokal:</strong> SAFE speichert Ihre Daten sicher auf diesem Gerät. Um alle Zyklen und Gesundheitsdaten zwischen Smartphone und Computer zu synchronisieren :",
+    syncExportTitle: "1. Kontodaten von diesem Gerät exportieren :",
+    btnCopySyncCode: "Synchronisierungscode kopieren",
+    btnDownloadBackupJson: "Sicherungsdatei herunterladen (.json)",
+    syncImportTitle: "2. Auf diesem Gerät importieren und aktivieren :",
+    btnApplySyncCode: "Daten sofort importieren & aktivieren",
+    btnUploadBackupJson: ".json Datei hochladen",
+    syncStep1: "<strong>Schritt 1:</strong> Auf Ihrem Quellgerät (z. B. Smartphone) auf <em>« Code kopieren »</em> tippen.",
+    syncStep2: "<strong>Schritt 2:</strong> Senden Sie den Code an sich selbst (per WhatsApp, E-Mail oder Notiz).",
+    syncStep3: "<strong>Schritt 3:</strong> Auf Ihrem Zweitgerät (z. B. Laptop) einfügen und auf <em>« Daten importieren »</em> klicken !"
   },
   sw: {
     appTitle: "SAFE Mfuatiliaji wa Hedhi",
@@ -3373,7 +3495,19 @@ const ALL_LOCALES = {
     drawerThemesLabel: "Mandhari na Rangi:",
     drawerLangLabel: "Lugha ya Mfumo:",
     drawerHistoryBtn: "📋 Historia ya Mizunguko na Kufuta",
-    btnViewAllHistory: "📋 Simamia na Futa Kumbukumbu za Kina"
+    btnViewAllHistory: "📋 Simamia na Futa Kumbukumbu za Kina",
+    btnCrossDeviceSync: "Sawazisha Akaunti (Simu na Kompyuta)",
+    syncModalTitle: "Usawazishaji wa Vifaa Vingi",
+    syncModalSub: "🔒 <strong>Faragha na Usalama:</strong> SAFE huhifadhi data yako salama kwenye kifaa hiki. Kusawazisha mizunguko yako yote na wasifu kati ya simu na kompyuta :",
+    syncExportTitle: "1. Hamisha data kutoka kifaa hiki :",
+    btnCopySyncCode: "Nakili Msimbo wa Usawazishaji",
+    btnDownloadBackupJson: "Pakua Faili ya Nakala (.json)",
+    syncImportTitle: "2. Ingiza na Washa kwenye Kifaa hiki :",
+    btnApplySyncCode: "Washa na Ingiza Data Sasa",
+    btnUploadBackupJson: "Pakia Faili ya .json",
+    syncStep1: "<strong>Hatua ya 1:</strong> Kwenye simu yako, bofya <em>« Nakili Msimbo »</em>.",
+    syncStep2: "<strong>Hatua ya 2:</strong> Jitume msimbo huo (kupitia WhatsApp au Barua pepe).",
+    syncStep3: "<strong>Hatua ya 3:</strong> Kwenye kompyuta yako, weka msimbo na ubofye <em>« Washa na Ingiza Data »</em> !"
   }
 };
 
@@ -4634,11 +4768,16 @@ class ManagerService {
       text.includes('late period') || text.includes('delayed period') || text.includes('period is late') || text.includes('missed period')
     );
 
+    const isCycleAnalysisQuery = (
+      (norm.includes('رايك') || norm.includes('رأيك') || norm.includes('تحليل') || norm.includes('حلل') || norm.includes('شوفي') || norm.includes('شايفه') || norm.includes('شايفة') || norm.includes('طبيعيه') || norm.includes('طبيعية') || norm.includes('منتظمه') || norm.includes('منتظمة') || norm.includes('مواعيد')) &&
+      (norm.includes('دور') || norm.includes('بريود') || norm.includes('حيض') || norm.includes('طمث') || norm.includes('سجل') || norm.includes('تاريخ') || text.includes('period') || text.includes('cycle'))
+    ) || text.includes('cycle analysis') || text.includes('analyze my cycle') || text.includes('what do you think of my period');
+
     const isIrregularCycleQuery = (
       norm.includes('غير منتظم') || norm.includes('مش منتظم') || norm.includes('عدم انتظام') || 
       norm.includes('لخبط') || norm.includes('هرمون') || norm.includes('تكيس') || 
       text.includes('irregular') || text.includes('pcos')
-    ) && !isDelayedPeriodQuery;
+    ) && !isDelayedPeriodQuery && !isCycleAnalysisQuery;
 
     const isWorkoutQuery = (
       norm.includes('رياض') || norm.includes('جيم') || norm.includes('تمرين') || 
@@ -4765,6 +4904,59 @@ class ManagerService {
       return isAr
         ? `🩸 **دليل غزارة النزيف وتدفق الدم وتجلطات الدورة يا ${userDisplayName}:**\n\n1. 📊 **ما هو التدفق الطبيعي؟**\n   - من الطبيعي أن يكون النزيف غزيراً في أول 24-48 ساعة، حيث يفرز الرحم إنزيمات مضادة للتجلط، ولكن مع سرعة التدفق قد تظهر كتل دموية صغيرة (أصغر من حجم عملة معدنية)، وهو أمر شائع ولا يستدعي القلق.\n\n2. 🥗 **بروتوكول العناية وتعويض الحديد:**\n   - **شرب 2.5 إلى 3 لتر سوائل:** لتعويض حجم البلازما ومنع هبوط الضغط والدوخة.\n   - **أطعمة تعزيز الهيموجلوبين:** السبانخ، العدس، الكبدة، الشمندر، اللحوم الحمراء.\n   - **فيتامين C (برتقال، ليمون، كيوي):** ضروري لامتصاص الحديد بنسبة 3 أضعاف.\n\n3. ⚠️ **متى يجب استشارة الطبيبة المختصة؟**\n   - إذا كنتِ بحاجة لتغيير فوطة صحية مشبعة بالكامل كل ساعة واحدة لأكثر من ساعتين متتاليتين.\n   - إذا استمر النزيف الغزير لأكثر من 7 أيام متواصلة 💕`
         : `🩸 **Flow Volume & Heavy Bleeding Medical Insights:**\n\n- Heavy bleeding in the first 24-48 hours with small clots is very common.\n- Drink 2.5-3L of warm fluids and focus on iron-rich foods with Vitamin C.\n- ⚠️ Consult a doctor if soaking through a pad every hour for 2+ consecutive hours 💕`;
+    }
+
+    if (isCycleAnalysisQuery) {
+      const cycles = (analytics.recent_cycles && analytics.recent_cycles.length > 0) 
+        ? analytics.recent_cycles 
+        : (analytics.all_cycles || []);
+      const totalCount = analytics.total_cycles !== undefined ? analytics.total_cycles : cycles.length;
+
+      if (totalCount === 0) {
+        return isAr
+          ? `🌸 **يا روحي يا ${userDisplayName}.. لسه مفيش دورات مسجلة في ملفكِ أقدر أحللها لكِ!** 💕\n\nاكتبي لي تاريخ أول يوم في آخر دورة جاتلكِ ومدتها (مثلاً: *"دورتي بدأت يوم 1 سبتمبر واستمرت 5 أيام"* )، وأنا هسجلها وأحسب لكِ كل الإحصائيات وأيام التبويض وموعد الدورة الجاية فوراً ✨`
+          : `🌸 No recorded cycles found yet lovely ${userDisplayName}! Log your first cycle to get a full personalized analysis 💕`;
+      }
+
+      const avgCycle = analytics.avg_cycle_length || 28;
+      const avgPeriod = analytics.avg_period_length || 5;
+      const isReg = analytics.is_regular;
+
+      const lengths = cycles.map(c => parseInt(c.cycle_length || 28, 10)).filter(l => !isNaN(l) && l > 0);
+      const maxLen = lengths.length > 0 ? Math.max(...lengths) : avgCycle;
+      const minLen = lengths.length > 0 ? Math.min(...lengths) : avgCycle;
+      const hasLongDelay = maxLen >= 36 || lengths.some(l => l >= 38);
+
+      let historyDetails = '';
+      if (cycles.length > 0) {
+        historyDetails = cycles.slice(0, 5).map((c, i) => `• **دورة ${c.last_period_date}:** طول الدورة \`${c.cycle_length} ${uDays}\`، مدة الحيض \`${c.period_length} ${uDays}\`، التدفق: *${c.flow_intensity || 'طبيعي'}*`).join('\n');
+      }
+
+      let analysisVerdict = '';
+      if (hasLongDelay) {
+        analysisVerdict = isAr
+          ? `⚠️ **ملاحظة فسيولوجية هامة:** لاحظت وجود دورات استغرقت \`${maxLen} يوماً\` (مثل الدورة التي امتدت ${maxLen} يوماً)، وهو ما يشير إلى وجود **تفاوت وتأخر ملحوظ** في بعض الفترات مقارنة بالمتوسط الطبيعي (28-35 يوماً). هذا التأخر غالباً ما يرتبط بالتوتر، تغير نمط النوم أو الوزن، أو حساسية المبيضين للهرمونات.`
+          : `⚠️ Noticeable delay detected in some cycles (up to ${maxLen} days).`;
+      } else if (isReg) {
+        analysisVerdict = isAr
+          ? `✨ **ما شاء الله دورتكِ منتظمة ومتوازنة جداً:** الفارق بين أطوال دوراتكِ طفيف جداً وضمن النطاق الطبيعي المثالي (25 إلى 32 يوماً).`
+          : `✨ Your cycle is beautifully regular and healthy.`;
+      } else {
+        analysisVerdict = isAr
+          ? `🌿 **تفاوت خفيف طبيعي:** أطوال دوراتكِ تتراوح بين \`${minLen}\` و \`${maxLen}\` يوماً، وهو تفاوت شائع ولا يستدعي القلق.`
+          : `🌿 Mild natural variation across your cycles.`;
+      }
+
+      let docAdvice = '';
+      if (hasLongDelay || !isReg) {
+        docAdvice = isAr
+          ? `\n\n👩‍⚕️ **توصيتي الطبية واستشارة الطبيبة:**\n- لأن هناك دورات بها تأخر تجاوز 36-40 يوماً، أنصحكِ بحجز استشارة لدى طبيبة النساء للاطمئنان وعمل فحص هرموني روتيني (الغدة الدرقية TSH، هرمون الحليب Prolactin، وسونار للمبايض لاستبعاد تكيس المبايض PCOS).\n- 📄 يمكنكِ فتح **"📄 تقرير الطبيبة (Medical Report)"** من القائمة الجانبية وطباعته ليساعد الطبيبة في رؤية كافة تفاصيل دوراتكِ الـ ${totalCount} دفعة واحدة!`
+          : `\n\n👩‍⚕️ Consider consulting a gynecologist with your app Medical Summary Report.`;
+      }
+
+      return isAr
+        ? `📊 **تحليلي الشامل لكافة دوراتكِ المسجلة يا ${userDisplayName}:** 💕\n\n🌸 **ملخص بيانات ملفكِ الصحي (${totalCount} دورات مسجلة):**\n- 🔄 **متوسط طول الدورة المرجح:** \`${avgCycle} ${uDays}\`\n- 🩸 **متوسط مدة الحيض:** \`${avgPeriod} ${uDays}\`\n- 📏 **المدى الزمني:** أقصر دورة كانت \`${minLen} يوم\` | وأطول دورة كانت \`${maxLen} يوم\`\n\n📋 **سجل آخر الدورات المسجلة:**\n${historyDetails}\n\n💡 **الرأي الطبي والتحليلي:**\n${analysisVerdict}${docAdvice}\n\n💖 **نصيحتي لتدليل نفسكِ:** حافظي على شرب 2.5 لتر ماء يومياً، مشروب البردقوش الدافئ لتنظيم التبويض، ونوم كافي 7-8 ساعات.. أنا معاكِ دايماً يا جميلة!`
+        : `📊 **Comprehensive Multi-Cycle Analysis for ${userDisplayName}:** 💕\n\n- Total Logged Cycles: ${totalCount}\n- Weighted Average: ${avgCycle} days\n- Cycle Range: ${minLen} to ${maxLen} days\n${analysisVerdict}${docAdvice}`;
     }
 
     if (isDelayedPeriodQuery) {
@@ -5313,6 +5505,71 @@ class ManagerService {
       saved_record: null
     };
   }
+
+  getAccountSyncCode() {
+    const user = this.getUser();
+    if (!user) return null;
+    const cycles = this.getLocalCycles(user.username);
+    const chatHistory = this.getChatHistory(user.username);
+    const syncObj = {
+      version: '1.0',
+      exported_at: new Date().toISOString(),
+      user,
+      cycles,
+      chatHistory
+    };
+    try {
+      const jsonStr = JSON.stringify(syncObj);
+      if (typeof btoa !== 'undefined') {
+        return 'SAFE_SYNC_' + btoa(encodeURIComponent(jsonStr));
+      }
+      return jsonStr;
+    } catch(e) {
+      return JSON.stringify(syncObj);
+    }
+  }
+
+  importAccountSyncCode(syncCode) {
+    if (!syncCode || typeof syncCode !== 'string') {
+      return { success: false, error: 'كود المزامنة غير صالح / Invalid sync code' };
+    }
+    try {
+      let jsonStr = syncCode.trim();
+      if (jsonStr.startsWith('SAFE_SYNC_')) {
+        const rawB64 = jsonStr.replace('SAFE_SYNC_', '');
+        if (typeof atob !== 'undefined') {
+          jsonStr = decodeURIComponent(atob(rawB64));
+        }
+      }
+      const data = JSON.parse(jsonStr);
+      if (!data.user || !data.user.username) {
+        return { success: false, error: 'بيانات الحساب غير مكتملة في هذا الكود' };
+      }
+
+      // Save user
+      const users = this.getLocalUsers();
+      users[data.user.username.toLowerCase()] = data.user;
+      this.saveLocalUsers(users);
+
+      // Save cycles
+      if (Array.isArray(data.cycles)) {
+        this.saveLocalCycles(data.user.username, data.cycles);
+      }
+
+      // Save chat history
+      if (Array.isArray(data.chatHistory)) {
+        this.saveChatHistory(data.user.username, data.chatHistory);
+      }
+
+      // Set active user
+      this.setUser(data.user);
+      this.setToken('safe_token_' + Date.now());
+
+      return { success: true, user: data.user, total_cycles: data.cycles ? data.cycles.length : 0 };
+    } catch(e) {
+      return { success: false, error: 'حدث خطأ أثناء فك تشفير كود المزامنة: ' + e.message };
+    }
+  }
 }
 
 
@@ -5798,20 +6055,95 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             }
         }
 
-        window.enablePushNotifications = function() {
+        window.openSyncModal = function() {
+            document.getElementById('syncModal').style.display = 'flex';
+            const codeArea = document.getElementById('syncExportCodeArea');
+            if (codeArea) {
+                const code = managerService.getAccountSyncCode();
+                codeArea.value = code || (currentLang === 'ar' ? 'سجلي دوراتكِ أولاً لتوليد كود المزامنة' : 'Log cycles first to generate sync code');
+            }
+        };
+
+        window.closeSyncModal = function() {
+            document.getElementById('syncModal').style.display = 'none';
+        };
+
+        window.copyAccountSyncCode = function() {
+            const codeArea = document.getElementById('syncExportCodeArea');
+            if (!codeArea || !codeArea.value || !codeArea.value.startsWith('SAFE_SYNC_')) {
+                window.showToast(currentLang === 'ar' ? '⚠️ لا توجد بيانات' : '⚠️ No data', currentLang === 'ar' ? 'سجلي دورتكِ أولاً لتوليد كود المزامنة' : 'Log cycles first');
+                return;
+            }
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(codeArea.value).then(() => {
+                    window.showToast(
+                        currentLang === 'ar' ? '📋 تم نسخ كود المزامنة!' : '📋 Sync Code Copied!',
+                        currentLang === 'ar' ? 'أرسلي الكود لجهازكِ الآخر والصقيه هناك لنقل حسابكِ فوراً 💕' : 'Paste this code on your other device to sync immediately 💕'
+                    );
+                });
+            } else {
+                codeArea.select();
+                document.execCommand('copy');
+                window.showToast(
+                    currentLang === 'ar' ? '📋 تم نسخ كود المزامنة!' : '📋 Sync Code Copied!',
+                    currentLang === 'ar' ? 'الصقيه في جهازكِ الآخر لنقل كافة السجلات فوراً 💕' : 'Paste on your other device'
+                );
+            }
+        };
+
+        window.applyAccountSyncCode = async function() {
+            const inputArea = document.getElementById('syncImportCodeArea');
+            const code = (inputArea ? inputArea.value : '').trim();
+            if (!code) {
+                window.showToast(currentLang === 'ar' ? '⚠️ كود المزامنة مطلوب' : '⚠️ Code Required', currentLang === 'ar' ? 'رجاءً الصقي كود المزامنة في المربع' : 'Please paste the sync code');
+                return;
+            }
+
+            const res = managerService.importAccountSyncCode(code);
+            if (res.success) {
+                window.showToast(
+                    currentLang === 'ar' ? '🚀 تم استيراد الحساب بنجاح!' : '🚀 Sync Successful!',
+                    currentLang === 'ar' ? `تم تفعيل حساب ${res.user.display_name} واستيراد ${res.total_cycles} دورة بنجاح!` : `Synced ${res.total_cycles} cycles successfully!`
+                );
+                closeSyncModal();
+                if (inputArea) inputArea.value = '';
+                currentUser = res.user;
+                if (document.getElementById('headerUserName')) document.getElementById('headerUserName').innerText = currentUser.display_name || currentUser.username;
+                if (document.getElementById('drawerUserName')) document.getElementById('drawerUserName').innerText = currentUser.display_name || currentUser.username;
+                await loadMyUserData();
+            } else {
+                window.showToast(currentLang === 'ar' ? '❌ فشل الاستيراد' : '❌ Import Failed', res.error);
+            }
+        };
+
+        window.enablePushNotifications = async function() {
             if (typeof window === 'undefined' || !window.Notification) return;
-            window.Notification.requestPermission().then(permission => {
+            try {
+                const permission = await window.Notification.requestPermission();
                 if (permission === 'granted') {
                     updateModalNotificationContent();
                     window.showToast(
                         currentLang === 'ar' ? "🔔 تم تفعيل التنبيهات!" : "🔔 Notifications Enabled!",
-                        currentLang === 'ar' ? "ستصلكِ تنبيهات مسبقة قبل 5 أيام من الدورة وعند بدء نافذة التبويض 💕" : "Period and ovulation alerts are active 💕"
+                        currentLang === 'ar' ? "ستصلكِ تنبيهات الهاتف والنظام مسبقاً قبل موعد دورتكِ والتبويض 💕" : "Phone & System notifications are active 💕"
                     );
+                    if ('serviceWorker' in navigator) {
+                        try {
+                            const reg = await navigator.serviceWorker.ready;
+                            reg.showNotification(
+                                currentLang === 'ar' ? "🌸 منصة SAFE: مرحباً بكِ" : "🌸 SAFE Health: Welcome",
+                                {
+                                    body: currentLang === 'ar' ? "تم تفعيل إشعارات الهاتف بنجاح!" : "Phone notifications successfully enabled!",
+                                    icon: "icon.svg",
+                                    badge: "icon.svg"
+                                }
+                            );
+                        } catch(swErr) {}
+                    }
                 }
-            });
+            } catch(e) {}
         };
 
-        window.sendTestNotification = function() {
+        window.sendTestNotification = async function() {
             let title = currentLang === 'ar' ? "🎒 تنبيه استعداد: احملي فوط صحية احتياطية" : "🎒 SAFE Advance Period Alert";
             let msg = currentLang === 'ar'
                 ? "دورتكِ تقترب 💕 تذكري وضع فوط صحية احتياطية في حقيبتكِ اليومية وتحضير قربة ماء دافئ"
@@ -5826,9 +6158,26 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             }
 
             window.showToast(title, msg);
+
+            // Phone OS notification via Service Worker first (for Mobile Chrome/Android)
+            if ('serviceWorker' in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification(title, {
+                        body: msg,
+                        icon: "icon.svg",
+                        badge: "icon.svg",
+                        vibrate: [200, 100, 200],
+                        tag: "safe-test-alert"
+                    });
+                    return;
+                } catch(e) {}
+            }
+
+            // Fallback for desktop window notification
             if (typeof window !== 'undefined' && window.Notification && window.Notification.permission === 'granted') {
                 try {
-                    new window.Notification(title, { body: msg, icon: "🎒" });
+                    new window.Notification(title, { body: msg, icon: "icon.svg" });
                 } catch (e) {}
             }
         };
@@ -7225,6 +7574,9 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            }
             document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
             setThemeColor(activeColorKey);
             applyTheme();
