@@ -145,33 +145,275 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
+            min-height: 58px;
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .brand-logo {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: var(--primary-gradient);
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 6px 16px var(--primary-glow);
+            box-shadow: 0 4px 14px var(--primary-glow);
             flex-shrink: 0;
         }
 
         .brand-text h1 {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 900;
             color: var(--text-primary);
             letter-spacing: -0.5px;
             font-family: 'Playfair Display', 'Cairo', serif;
+            line-height: 1.2;
         }
-        .brand-text span { font-size: 0.75rem; color: var(--text-secondary); display: block; }
-        .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .brand-text span { font-size: 0.72rem; color: var(--text-secondary); display: block; }
+        
+        @media (max-width: 540px) {
+            .brand-text span { display: none; }
+            .brand-text h1 { font-size: 1.1rem; }
+            .brand-logo { width: 34px; height: 34px; border-radius: 10px; }
+            header { padding: 8px 12px; min-height: 52px; }
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        /* Compact Header Toggle Buttons */
+        .btn-drawer-toggle {
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .btn-drawer-toggle:hover {
+            background: var(--surface);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+        .drawer-alert-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            box-shadow: 0 0 6px #ef4444;
+            animation: pulseDot 1.5s infinite;
+            display: none;
+        }
+        @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+        /* 🌟 Slide-out Side Drawer & Backdrop Overlay */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 12, 29, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drawer-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .app-drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 370px;
+            max-width: 88vw;
+            background: var(--surface);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            right: 0;
+            left: auto;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+        [dir="ltr"] .app-drawer {
+            right: auto;
+            left: 0;
+            border-left: none;
+            border-right: 1px solid var(--border-color);
+            box-shadow: 10px 0 35px rgba(0, 0, 0, 0.2);
+            transform: translateX(-100%);
+        }
+        .app-drawer.open {
+            transform: translateX(0) !important;
+        }
+
+        .drawer-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-glow), rgba(245, 158, 11, 0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            backdrop-filter: blur(10px);
+        }
+        .drawer-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .drawer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px var(--primary-glow);
+            flex-shrink: 0;
+        }
+        .drawer-user-details h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .drawer-user-details span {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+        }
+        .btn-drawer-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--surface);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-drawer-close:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: rotate(90deg);
+        }
+
+        .drawer-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+        .drawer-section {
+            background: var(--surface-hover);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .drawer-section-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .drawer-card {
+            background: var(--surface) !important;
+            padding: 12px 14px !important;
+            box-shadow: none !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        .drawer-nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .drawer-nav-btn:hover {
+            border-color: var(--primary);
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+        .drawer-nav-btn .btn-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawer-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border-color);
+            background: var(--surface);
+        }
+        .btn-drawer-logout {
+            width: 100%;
+            padding: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #ef4444;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.86rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-drawer-logout:hover {
+            background: #ef4444;
+            color: white;
+        }
 
         /* 5-Theme Color Palette Picker Dots */
         .theme-palette-picker {
@@ -264,6 +506,9 @@
             display: flex; align-items: center; gap: 6px; background: var(--surface-hover); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--border-color); font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); cursor: pointer;
         }
         body.dark-mode .user-pill { color: var(--primary-light); }
+        @media (max-width: 768px) {
+            .desktop-only { display: none !important; }
+        }
 
         .btn-logout {
             padding: 5px 12px; border-radius: 20px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;
@@ -811,71 +1056,188 @@
             </div>
         </div>
 
-        <div class="header-actions">
-            <!-- 🎨 5-Theme Color Palette Switcher (Restored) -->
-            <div class="theme-palette-picker" title="Change Theme Color / تغيير ألوان الموقع">
-                <div class="color-dot active" id="dot_gold" style="background:#d49a5b;" onclick="setThemeColor('gold', event)" title="Executive Gold (الذهبي الفاخر)"></div>
-                <div class="color-dot" id="dot_rose" style="background:#e85d75;" onclick="setThemeColor('rose', event)" title="Rose Pink (الوردي اللطيف)"></div>
-                <div class="color-dot" id="dot_purple" style="background:#8b5cf6;" onclick="setThemeColor('purple', event)" title="Royal Purple (البنفسجي الملكي)"></div>
-                <div class="color-dot" id="dot_teal" style="background:#06b6d4;" onclick="setThemeColor('teal', event)" title="Ocean Teal (الأزرق الفيروزي)"></div>
-                <div class="color-dot" id="dot_emerald" style="background:#10b981;" onclick="setThemeColor('emerald', event)" title="Emerald Green (الأخضر الزمردي)"></div>
-            </div>
-
-            <!-- 🌐 5-Language Switcher Pills -->
-            <div class="lang-pills-bar">
-                <button class="lang-pill active" id="langBtn_ar" onclick="switchAppLang('ar')">🇸🇦 عربي</button>
-                <button class="lang-pill" id="langBtn_en" onclick="switchAppLang('en')">🇬🇧 EN</button>
-                <button class="lang-pill" id="langBtn_fr" onclick="switchAppLang('fr')">🇫🇷 FR</button>
-                <button class="lang-pill" id="langBtn_de" onclick="switchAppLang('de')">🇩🇪 DE</button>
-                <button class="lang-pill" id="langBtn_sw" onclick="switchAppLang('sw')">🇹🇿 SW</button>
-            </div>
-
-            <!-- 📲 Install App Button (PWA) -->
-            <button class="btn-header-action btn-install-app" id="btnInstallApp" onclick="installPWA()" style="display: none;">
-                📲 <span data-i18n="btnInstall">تثبيت التطبيق</span>
-            </button>
-
-            <!-- Health Profile / BMI Button -->
-            <button class="btn-header-action" onclick="openProfileModal()" title="Health Profile & BMI">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span data-i18n="btnProfile">الملف</span>
-            </button>
-
-            <!-- 📄 Doctor Medical Report Button -->
-            <button class="btn-header-action" onclick="openMedicalReportModal()" title="Doctor Medical Report / تقرير الطبيب">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                <span data-i18n="btnMedicalReport">تقرير الطبيب</span>
-            </button>
-
-            <!-- 🔔 Smart Notifications Button -->
-            <button class="btn-header-action" id="headerNotifyBtn" onclick="openNotificationsModal()" title="Smart Notifications Center">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                <span id="notifyBtnLabel" data-i18n="notifyBtn">التنبيهات</span>
-            </button>
-
-            <!-- 🌐 Share App / Other Devices Button -->
-            <button class="btn-header-action" onclick="openShareModal()" title="Share & Open on Other Devices / مشاركة التطبيق للأجهزة الأخرى">
-                <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                <span data-i18n="btnShare">مشاركة</span>
-            </button>
-
+        <div class="header-actions" id="headerAuthSection" style="display: flex; align-items: center; gap: 8px;">
             <!-- Dark / Light Mode -->
             <button class="btn-header-action" onclick="toggleDarkMode()" title="Dark/Light Mode">
                 <span id="themeIcon">🌙</span>
             </button>
 
-            <!-- User Pill & Logout -->
-            <div id="headerAuthSection" style="display: flex; align-items: center; gap: 6px;">
-                <div class="user-pill" id="userPill" onclick="openProfileModal()">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span id="headerUserName">Sarah</span>
-                </div>
-                <button class="btn-logout" onclick="logout()">
-                    <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                </button>
+            <!-- User Quick Pill (Desktop) -->
+            <div class="user-pill desktop-only" id="userPill" onclick="toggleAppDrawer(true)" style="cursor: pointer;">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span id="headerUserName">Sarah</span>
             </div>
+
+            <!-- Slide Drawer Toggle Button ☰ -->
+            <button class="btn-drawer-toggle" id="headerMenuBtn" onclick="toggleAppDrawer(true)" title="القائمة الرئيسية / Menu">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <span class="drawer-toggle-text" data-i18n="drawerMenuBtn">القائمة</span>
+                <span class="drawer-alert-dot" id="drawerAlertDot"></span>
+            </button>
         </div>
     </header>
+
+    <!-- 🌟 Slide-out Side Navigation Drawer -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleAppDrawer(false)"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <div class="drawer-user-info" onclick="openProfileModal(); toggleAppDrawer(false);" style="cursor: pointer;">
+                <div class="drawer-avatar">
+                    <svg class="icon" viewBox="0 0 24 24" style="stroke:white;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="drawer-user-details">
+                    <h3 id="drawerUserName">Sarah</h3>
+                    <span id="drawerUserStatus" data-i18n="drawerUserSubtitle">ملفكِ الصحي والـ BMI 🌸</span>
+                </div>
+            </div>
+            <button class="btn-drawer-close" onclick="toggleAppDrawer(false)" title="إغلاق القائمة">✕</button>
+        </div>
+
+        <div class="drawer-body">
+            <!-- SECTION 1: 💧 & 😊 Daily Wellness (Hydration & Mood Tracker) -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">
+                    <span>💧</span>
+                    <span data-i18n="drawerWellnessTitle">العناية والصحة اليومية</span>
+                </div>
+
+                <!-- Hydration Tracker Card -->
+                <div class="wellness-card drawer-card">
+                    <div class="wellness-card-header">
+                        <h4>💧 <span data-i18n="hydrationTitle">شرب الماء اليومي (ترطيب الجسم والهرمونات)</span></h4>
+                        <span id="waterCountBadge" style="font-size: 0.78rem; font-weight: 800; color: #0284c7;">0 / 8 أكواب (0%)</span>
+                    </div>
+                    <div class="water-cups-row" id="waterCupsRow"></div>
+                    <div class="water-progress-bar">
+                        <div class="water-progress-fill" id="waterProgressFill"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+                        <button class="btn-action" style="padding: 4px 10px;" onclick="addWaterCup()" data-i18n="btnAddCup">+ كوب ماء (250ml) 💧</button>
+                        <button class="btn-action" style="padding: 4px 10px; color: var(--text-secondary);" onclick="resetDailyWater()" data-i18n="btnResetWater">إعادة تعيين 🔄</button>
+                    </div>
+                </div>
+
+                <!-- Daily Mood Logger Card -->
+                <div class="wellness-card drawer-card">
+                    <div class="wellness-card-header">
+                        <h4>😊 <span data-i18n="moodTitle">كيف تشعرين اليوم؟ (تسجيل سريع للحالة)</span></h4>
+                        <span id="currentMoodBadge" style="font-size: 0.78rem; font-weight: 800; color: var(--primary);" data-i18n="todayMoodBadge">🌸 اليوم</span>
+                    </div>
+                    <div class="mood-chips-row" id="moodChipsRow">
+                        <div class="mood-chip" onclick="logDailyMood('happy')" data-i18n="moodHappy">😊 سعيدة</div>
+                        <div class="mood-chip" onclick="logDailyMood('tired')" data-i18n="moodTired">😴 مرهقة</div>
+                        <div class="mood-chip" onclick="logDailyMood('energetic')" data-i18n="moodEnergetic">⚡ نشيطة</div>
+                        <div class="mood-chip" onclick="logDailyMood('sensitive')" data-i18n="moodSensitive">🥺 حساسة</div>
+                        <div class="mood-chip" onclick="logDailyMood('cravings')" data-i18n="moodCravings">🍫 حلويات</div>
+                    </div>
+                    <div class="mood-tip-box" id="moodTipBox" data-i18n="moodTipPlaceholder">
+                        💡 اختاري مزاجكِ اليوم للحصول على نصيحة هرمونية فورية ودعم نفسي مخصص.
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: 🛠️ Tools & Reports -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">
+                    <span>🛠️</span>
+                    <span data-i18n="drawerToolsTitle">الأدوات والتقارير الطبية</span>
+                </div>
+
+                <!-- 📄 Doctor Medical Report Button -->
+                <button class="drawer-nav-btn" onclick="openMedicalReportModal(); toggleAppDrawer(false);" title="Doctor Medical Report">
+                    <div class="btn-left">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span data-i18n="btnMedicalReport">تقرير الطبيبة (Medical Report)</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- 🔔 Smart Notifications Button -->
+                <button class="drawer-nav-btn" id="headerNotifyBtn" onclick="openNotificationsModal(); toggleAppDrawer(false);" title="Smart Notifications Center">
+                    <div class="btn-left">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <span id="notifyBtnLabel" data-i18n="notifyBtn">مركز التنبيهات الذكية</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- Health Profile / BMI Button -->
+                <button class="drawer-nav-btn" onclick="openProfileModal(); toggleAppDrawer(false);" title="Health Profile & BMI">
+                    <div class="btn-left">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span data-i18n="btnProfile">الملف ومؤشر كتلة الجسم (BMI)</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- ⚙️ AI Settings Button -->
+                <button class="drawer-nav-btn" onclick="openAISettingsModal(); toggleAppDrawer(false);" title="AI Engine Settings">
+                    <div class="btn-left">
+                        <span>⚙️</span>
+                        <span data-i18n="btnAISettings">إعدادات الذكاء الاصطناعي ⚙️</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- 🌐 Share App Button -->
+                <button class="drawer-nav-btn" onclick="openShareModal(); toggleAppDrawer(false);" title="Share & Open on Other Devices">
+                    <div class="btn-left">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        <span data-i18n="btnShare">مشاركة التطبيق للأجهزة الأخرى</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+
+                <!-- 📲 Install App Button (PWA) -->
+                <button class="drawer-nav-btn btn-install-app" id="btnInstallApp" onclick="installPWA(); toggleAppDrawer(false);" style="display: none;">
+                    <div class="btn-left">
+                        <span>📲</span>
+                        <span data-i18n="btnInstall">تثبيت التطبيق كبرنامج مستقل</span>
+                    </div>
+                    <span>➔</span>
+                </button>
+            </div>
+
+            <!-- SECTION 3: 🎨 Customization & Language -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">
+                    <span>🎨</span>
+                    <span data-i18n="drawerCustomizationTitle">المظهر واللغة</span>
+                </div>
+
+                <!-- 🎨 5-Theme Color Palette Switcher -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);" data-i18n="drawerThemesLabel">ثيم وألوان المنصة:</span>
+                    <div class="theme-palette-picker" style="justify-content: space-around; width: 100%;" title="Change Theme Color / تغيير ألوان الموقع">
+                        <div class="color-dot active" id="dot_gold" style="background:#d49a5b;" onclick="setThemeColor('gold', event)" title="Executive Gold (الذهبي الفاخر)"></div>
+                        <div class="color-dot" id="dot_rose" style="background:#e85d75;" onclick="setThemeColor('rose', event)" title="Rose Pink (الوردي اللطيف)"></div>
+                        <div class="color-dot" id="dot_purple" style="background:#8b5cf6;" onclick="setThemeColor('purple', event)" title="Royal Purple (البنفسجي الملكي)"></div>
+                        <div class="color-dot" id="dot_teal" style="background:#06b6d4;" onclick="setThemeColor('teal', event)" title="Ocean Teal (الأزرق الفيروزي)"></div>
+                        <div class="color-dot" id="dot_emerald" style="background:#10b981;" onclick="setThemeColor('emerald', event)" title="Emerald Green (الأخضر الزمردي)"></div>
+                    </div>
+                </div>
+
+                <!-- 🌐 5-Language Switcher Pills -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);" data-i18n="drawerLangLabel">لغة الواجهة (Language):</span>
+                    <div class="lang-pills-bar" style="flex-wrap: wrap; justify-content: center; gap: 4px;">
+                        <button class="lang-pill active" id="langBtn_ar" onclick="switchAppLang('ar')">🇸🇦 عربي</button>
+                        <button class="lang-pill" id="langBtn_en" onclick="switchAppLang('en')">🇬🇧 EN</button>
+                        <button class="lang-pill" id="langBtn_fr" onclick="switchAppLang('fr')">🇫🇷 FR</button>
+                        <button class="lang-pill" id="langBtn_de" onclick="switchAppLang('de')">🇩🇪 DE</button>
+                        <button class="lang-pill" id="langBtn_sw" onclick="switchAppLang('sw')">🇹🇿 SW</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="drawer-footer">
+            <button class="btn-drawer-logout" onclick="logout(); toggleAppDrawer(false);">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span data-i18n="logout">تسجيل الخروج</span>
+            </button>
+        </div>
+    </div>
 
     <!-- In-App Toast Notification -->
     <div class="toast-notification" id="toastNotification">
@@ -1277,42 +1639,6 @@
                 </button>
             </div>
 
-            <!-- 💧 & 😊 Daily Wellness Bar (Hydration + Mood Tracker) -->
-            <div class="daily-wellness-bar">
-                <!-- Hydration Tracker Card -->
-                <div class="wellness-card">
-                    <div class="wellness-card-header">
-                        <h4>💧 <span data-i18n="hydrationTitle">شرب الماء اليومي (ترطيب الجسم والهرمونات)</span></h4>
-                        <span id="waterCountBadge" style="font-size: 0.8rem; font-weight: 800; color: #0284c7;">0 / 8 أكواب (0%)</span>
-                    </div>
-                    <div class="water-cups-row" id="waterCupsRow"></div>
-                    <div class="water-progress-bar">
-                        <div class="water-progress-fill" id="waterProgressFill"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
-                        <button class="btn-action" style="padding: 4px 10px;" onclick="addWaterCup()" data-i18n="btnAddCup">+ كوب ماء (250ml) 💧</button>
-                        <button class="btn-action" style="padding: 4px 10px; color: var(--text-secondary);" onclick="resetDailyWater()" data-i18n="btnResetWater">إعادة تعيين 🔄</button>
-                    </div>
-                </div>
-
-                <!-- Daily Mood Logger Card -->
-                <div class="wellness-card">
-                    <div class="wellness-card-header">
-                        <h4>😊 <span data-i18n="moodTitle">كيف تشعرين اليوم؟ (تسجيل سريع للحالة)</span></h4>
-                        <span id="currentMoodBadge" style="font-size: 0.8rem; font-weight: 800; color: var(--primary);" data-i18n="todayMoodBadge">🌸 اليوم</span>
-                    </div>
-                    <div class="mood-chips-row" id="moodChipsRow">
-                        <div class="mood-chip" onclick="logDailyMood('happy')" data-i18n="moodHappy">😊 سعيدة</div>
-                        <div class="mood-chip" onclick="logDailyMood('tired')" data-i18n="moodTired">😴 مرهقة</div>
-                        <div class="mood-chip" onclick="logDailyMood('energetic')" data-i18n="moodEnergetic">⚡ نشيطة</div>
-                        <div class="mood-chip" onclick="logDailyMood('sensitive')" data-i18n="moodSensitive">🥺 حساسة</div>
-                        <div class="mood-chip" onclick="logDailyMood('cravings')" data-i18n="moodCravings">🍫 حلويات</div>
-                    </div>
-                    <div class="mood-tip-box" id="moodTipBox" data-i18n="moodTipPlaceholder">
-                        💡 اختاري مزاجكِ اليوم للحصول على نصيحة هرمونية فورية ودعم نفسي مخصص.
-                    </div>
-                </div>
-            </div>
 
             <!-- 🌸 5-Day Pre-Period / Ovulation Smart Warning Alert Banner -->
             <div class="notification-alert-box" id="prePeriodAlertBox" onclick="openNotificationsModal()">
@@ -1943,6 +2269,7 @@ const ALL_LOCALES = {
     btnAISettings: "إعدادات الذكاء الاصطناعي ⚙️",
     aiSettingsTitle: "⚙️ إعدادات محرك الذكاء الاصطناعي (AI Settings)",
     aiSettingsDesc: "اختاري بين سارة الذكية (المدمج السريع مجاناً) أو ربط مفتاح API خاص بكِ (OpenAI GPT-4o / Groq / OpenRouter) للدردشة المباشرة مع أقوى النماذج العالمية!",
+    aiModeLabel: "وضع التشغيل (AI Mode):",
     aiModeBuiltIn: "🚀 سارة الذكية (المدمج السريع - مجاناً وبدون مفاتيح)",
     aiModeCustom: "🌐 ربط مع سيرفر ذكاء اصطناعي مخصص (OpenAI / Groq / OpenRouter)",
     aiApiKeyLabel: "مفتاح الـ API الخاص بكِ (API Key):",
@@ -2070,7 +2397,15 @@ const ALL_LOCALES = {
     ovu_twinge: "⚡ نغزات ألم بالجانب (التبويض)",
     ovu_temp: "🌡️ ارتفاع طفيف بحرارة الجسم",
     ovu_energy: "🌸 زيادة النشاط والحيوية",
-    ovu_breast: "🍒 حساسية خفيفة بالثدي"
+    ovu_breast: "🍒 حساسية خفيفة بالثدي",
+    drawerMenuBtn: "القائمة",
+    drawerMenuTitle: "القائمة والإعدادات",
+    drawerUserSubtitle: "ملفكِ الصحي والـ BMI 🌸",
+    drawerWellnessTitle: "العناية والصحة اليومية",
+    drawerToolsTitle: "الأدوات والتقارير الطبية",
+    drawerCustomizationTitle: "المظهر واللغة",
+    drawerThemesLabel: "ثيم وألوان المنصة:",
+    drawerLangLabel: "لغة الواجهة (Language):"
   },
   en: {
     appTitle: "SAFE Period Tracker",
@@ -2151,6 +2486,7 @@ const ALL_LOCALES = {
     btnAISettings: "AI Engine Settings ⚙️",
     aiSettingsTitle: "⚙️ AI Engine Settings",
     aiSettingsDesc: "Choose between Sarah Fast AI (free, built-in) or connect your own API Key (OpenAI GPT-4o / Groq / OpenRouter) for direct cloud intelligence!",
+    aiModeLabel: "Operation Mode (AI Mode):",
     aiModeBuiltIn: "🚀 Sarah Fast AI (Built-in Free - No Keys Needed)",
     aiModeCustom: "🌐 Custom Cloud AI (OpenAI / Groq / OpenRouter / DeepSeek)",
     aiApiKeyLabel: "Your API Key:",
@@ -2278,7 +2614,15 @@ const ALL_LOCALES = {
     ovu_twinge: "⚡ One-Sided Ovulation Twinges",
     ovu_temp: "🌡️ Slight Body Temperature Rise",
     ovu_energy: "🌸 Boost in Energy & Vitality",
-    ovu_breast: "🍒 Mild Breast Sensitivity"
+    ovu_breast: "🍒 Mild Breast Sensitivity",
+    drawerMenuBtn: "Menu",
+    drawerMenuTitle: "Main Menu & Settings",
+    drawerUserSubtitle: "Health Profile & BMI 🌸",
+    drawerWellnessTitle: "Daily Wellness & Hydration",
+    drawerToolsTitle: "Tools & Medical Reports",
+    drawerCustomizationTitle: "Appearance & Language",
+    drawerThemesLabel: "Theme & Accent Color:",
+    drawerLangLabel: "Interface Language:"
   },
   fr: {
     appTitle: "SAFE Suivi des Règles",
@@ -2359,6 +2703,7 @@ const ALL_LOCALES = {
     btnAISettings: "Paramètres IA ⚙️",
     aiSettingsTitle: "⚙️ Paramètres du Moteur IA",
     aiSettingsDesc: "Choisissez entre Sarah IA intégrée (rapide et gratuite) ou connectez votre propre clé API (OpenAI GPT-4o / Groq / OpenRouter) !",
+    aiModeLabel: "Mode de fonctionnement (Mode IA) :",
     aiModeBuiltIn: "🚀 Sarah IA Rapide (Intégrée Gratuite - Sans Clé)",
     aiModeCustom: "🌐 IA Cloud Personnalisée (OpenAI / Groq / OpenRouter)",
     aiApiKeyLabel: "Votre Clé API:",
@@ -2486,7 +2831,15 @@ const ALL_LOCALES = {
     ovu_twinge: "⚡ Pincement d'Ovulation",
     ovu_temp: "🌡️ Hausse de Température",
     ovu_energy: "🌸 Regain d'Énergie",
-    ovu_breast: "🍒 Sensibilité des Seins"
+    ovu_breast: "🍒 Sensibilité des Seins",
+    drawerMenuBtn: "Menu",
+    drawerMenuTitle: "Menu Principal & Paramètres",
+    drawerUserSubtitle: "Profil Santé & IMC 🌸",
+    drawerWellnessTitle: "Bien-être & Soins Quotidiens",
+    drawerToolsTitle: "Outils & Rapports Médicaux",
+    drawerCustomizationTitle: "Apparence & Langue",
+    drawerThemesLabel: "Thème et Couleurs :",
+    drawerLangLabel: "Langue de l'interface :"
   },
   de: {
     appTitle: "SAFE Perioden-Tracker",
@@ -2567,6 +2920,7 @@ const ALL_LOCALES = {
     btnAISettings: "KI-Einstellungen ⚙️",
     aiSettingsTitle: "⚙️ KI-Engine Einstellungen",
     aiSettingsDesc: "Wähle zwischen Sarah Schneller KI (kostenlos, integriert) oder verbinde deinen eigenen API-Key (OpenAI GPT-4o / Groq / OpenRouter)!",
+    aiModeLabel: "Betriebsmodus (KI-Modus):",
     aiModeBuiltIn: "🚀 Sarah Schnelle KI (Kostenlos Integriert - Kein Key)",
     aiModeCustom: "🌐 Eigene Cloud-KI (OpenAI / Groq / OpenRouter / DeepSeek)",
     aiApiKeyLabel: "Dein API-Key:",
@@ -2694,7 +3048,15 @@ const ALL_LOCALES = {
     ovu_twinge: "⚡ Einseitiger Mittelschmerz",
     ovu_temp: "🌡️ Leichter Temperaturanstieg",
     ovu_energy: "🌸 Mehr Energie & Wohlbefinden",
-    ovu_breast: "🍒 Brustspannen"
+    ovu_breast: "🍒 Brustspannen",
+    drawerMenuBtn: "Menü",
+    drawerMenuTitle: "Hauptmenü & Einstellungen",
+    drawerUserSubtitle: "Gesundheitsprofil & BMI 🌸",
+    drawerWellnessTitle: "Tägliches Wohlbefinden & Pflege",
+    drawerToolsTitle: "Tools & Medizinische Berichte",
+    drawerCustomizationTitle: "Erscheinungsbild & Sprache",
+    drawerThemesLabel: "Design & Akzentfarben:",
+    drawerLangLabel: "Sprache der Benutzeroberfläche:"
   },
   sw: {
     appTitle: "SAFE Mfuatiliaji wa Hedhi",
@@ -2775,6 +3137,7 @@ const ALL_LOCALES = {
     btnAISettings: "Mipangilio ya AI ⚙️",
     aiSettingsTitle: "⚙️ Mipangilio ya Injini ya AI",
     aiSettingsDesc: "Chagua kati ya Sarah AI ya haraka (ya bure, iliyojumuishwa) au unganisha ufunguo wako wa API (OpenAI GPT-4o / Groq / OpenRouter)!",
+    aiModeLabel: "Hali ya Uendeshaji (Hali ya AI):",
     aiModeBuiltIn: "🚀 Sarah AI ya Haraka (Iliyojumuishwa Bure - Bila Ufunguo)",
     aiModeCustom: "🌐 AI Maalum ya Wingu (OpenAI / Groq / OpenRouter)",
     aiApiKeyLabel: "Ufunguo Wako wa API:",
@@ -2902,7 +3265,15 @@ const ALL_LOCALES = {
     ovu_twinge: "⚡ Mchomo wa Upevushaji",
     ovu_temp: "🌡️ Joto Kupanda Kidogo",
     ovu_energy: "🌸 Kuongezeka kwa Nguvu",
-    ovu_breast: "🍒 Matiti Kuwa Mwororo"
+    ovu_breast: "🍒 Matiti Kuwa Mwororo",
+    drawerMenuBtn: "Menyu",
+    drawerMenuTitle: "Menyu Kuu na Mipangilio",
+    drawerUserSubtitle: "Wasifu wa Afya na BMI 🌸",
+    drawerWellnessTitle: "Afya na Utunzaji wa Kila Siku",
+    drawerToolsTitle: "Zana na Ripoti za Matibabu",
+    drawerCustomizationTitle: "Muonekano na Lugha",
+    drawerThemesLabel: "Mandhari na Rangi:",
+    drawerLangLabel: "Lugha ya Mfumo:"
   }
 };
 
@@ -5019,6 +5390,31 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             });
         }
 
+        // 🌟 Slide-out Side Navigation Drawer Controls
+        window.toggleAppDrawer = function(open) {
+            const drawer = document.getElementById('appDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            if (!drawer || !overlay) return;
+
+            const shouldOpen = (open !== undefined) ? !!open : !drawer.classList.contains('open');
+            if (shouldOpen) {
+                drawer.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                drawer.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        };
+
+        // Close drawer on Escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.toggleAppDrawer(false);
+            }
+        });
+
         window.toggleDarkMode = function() {
             isDarkMode = !isDarkMode;
             localStorage.setItem('safe_theme', isDarkMode ? 'dark' : 'light');
@@ -5503,12 +5899,14 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                 const data = await managerService.getNotifications();
                 const alertBox = document.getElementById('prePeriodAlertBox');
                 const headerNotifyBtn = document.getElementById('headerNotifyBtn');
+                const drawerAlertDot = document.getElementById('drawerAlertDot');
 
                 if (data.success && data.notification && data.notification.active) {
                     currentNotificationData = data.notification;
                     const n = data.notification;
                     alertBox.style.display = 'block';
                     if (headerNotifyBtn) headerNotifyBtn.classList.add('has-alert');
+                    if (drawerAlertDot) drawerAlertDot.style.display = 'block';
 
                     document.getElementById('alertBadgeText').innerText = currentLang === 'ar'
                         ? (n.badge_ar || (n.type === 'ovulation_alert' ? '⭐ نافذة التبويض والخصوبة نشطة' : '🌸 تنبيه الدورة الشهري'))
@@ -5532,6 +5930,7 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     currentNotificationData = null;
                     alertBox.style.display = 'none';
                     if (headerNotifyBtn) headerNotifyBtn.classList.remove('has-alert');
+                    if (drawerAlertDot) drawerAlertDot.style.display = 'none';
                 }
             } catch (err) {}
         }
@@ -5637,13 +6036,17 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
         function showAuthView() {
             document.getElementById('authView').style.display = 'block';
             document.getElementById('mainAppView').style.display = 'none';
-            document.getElementById('headerAuthSection').style.display = 'none';
+            document.getElementById('headerAuthSection').style.display = 'flex';
+            const userPill = document.getElementById('userPill');
+            if (userPill) userPill.style.display = 'none';
         }
 
         function showAppView() {
             document.getElementById('authView').style.display = 'none';
             document.getElementById('mainAppView').style.display = 'flex';
             document.getElementById('headerAuthSection').style.display = 'flex';
+            const userPill = document.getElementById('userPill');
+            if (userPill) userPill.style.display = 'flex';
             updateUserBanner();
             loadMyUserData();
             checkPrePeriodNotifications();
@@ -5654,6 +6057,8 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const name = currentUser.display_name || currentUser.username;
             const headerUserName = document.getElementById('headerUserName');
             if (headerUserName) headerUserName.innerText = name;
+            const drawerUserName = document.getElementById('drawerUserName');
+            if (drawerUserName) drawerUserName.innerText = name;
 
             const welcomeTitles = {
                 ar: `مرحباً بكِ مجدداً، ${name}!`,
