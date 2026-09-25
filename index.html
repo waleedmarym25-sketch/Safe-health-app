@@ -540,7 +540,35 @@
 
         @media (max-width: 768px) {
             .desktop-tabs { display: none !important; }
-            .theme-palette-picker { display: none; }
+            .theme-palette-picker { display: none !important; }
+            .side-panel { display: none !important; }
+            .chat-grid { display: block !important; }
+            .container { padding: 10px 8px calc(74px + env(safe-area-inset-bottom)) 8px !important; gap: 12px !important; }
+            .chat-box { height: calc(100vh - 200px) !important; min-height: 400px !important; border-radius: var(--radius-md) !important; }
+            .chat-messages { padding: 12px 10px !important; gap: 10px !important; }
+            .msg-bubble { max-width: 90% !important; font-size: 0.86rem !important; padding: 10px 14px !important; }
+            .chat-input-bar { padding: 8px 10px !important; gap: 6px !important; }
+            .btn-mic { width: 38px !important; height: 38px !important; flex-shrink: 0 !important; }
+            .btn-send { padding: 0 14px !important; font-size: 0.82rem !important; height: 38px !important; }
+            .chat-input-bar input { padding: 8px 12px !important; font-size: 0.85rem !important; height: 38px !important; }
+
+            /* Mobile Luxury Calendar - 100% Fit */
+            .calendar-card { padding: 12px 6px !important; border-radius: var(--radius-md) !important; overflow: hidden !important; }
+            .calendar-header { margin-bottom: 10px !important; padding-bottom: 8px !important; }
+            .calendar-month-title { font-size: 1rem !important; }
+            .cal-nav-btn { padding: 5px 10px !important; font-size: 0.75rem !important; }
+            .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 2px !important; width: 100% !important; box-sizing: border-box !important; }
+            .cal-day-header { font-size: 0.7rem !important; font-weight: 800 !important; padding: 4px 0 !important; }
+            .cal-day-cell { min-height: 48px !important; max-height: 60px !important; padding: 3px 2px !important; border-radius: 6px !important; overflow: hidden !important; }
+            .cal-day-num { font-size: 0.76rem !important; font-weight: 800 !important; line-height: 1 !important; }
+            .cal-badge { font-size: 0.58rem !important; padding: 1px 2px !important; margin-top: 2px !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; display: block !important; border-radius: 4px !important; }
+            .calendar-legend { gap: 8px !important; font-size: 0.72rem !important; margin-top: 10px !important; padding-top: 10px !important; }
+
+            /* Mobile Luxury Affirmation & Cards */
+            .encouragement-card { padding: 12px 14px !important; gap: 10px !important; }
+            .affirmation-icon { width: 38px !important; height: 38px !important; font-size: 22px !important; }
+            .affirmation-text { font-size: 0.86rem !important; }
+            .btn-new-affirmation { padding: 6px 12px !important; font-size: 0.78rem !important; }
         }
         @media (min-width: 769px) {
             .mobile-bottom-nav { display: none !important; }
@@ -1136,12 +1164,67 @@
                 </div>
             </div>
 
+            <!-- SECTION: 👤 Personal Profile Overview & Security Guarantee -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">
+                    <span>👤</span>
+                    <span data-i18n="sideOverviewTitle">ملخص ملفكِ الشخصي</span>
+                </div>
+                <div class="wellness-card drawer-card" style="padding: 12px 14px;">
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statLastPeriod">تاريخ آخر دورة:</span>
+                        <span class="stat-val" id="drawerLastDate">—</span>
+                    </div>
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statAvgCycle">متوسط طول الدورة (المرجح):</span>
+                        <span class="stat-val" id="drawerCycleLength">—</span>
+                    </div>
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statAvgPeriod">متوسط مدة الحيض:</span>
+                        <span class="stat-val" id="drawerPeriodLength">—</span>
+                    </div>
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statFlow">غزارة النزيف الأخيرة:</span>
+                        <span class="stat-val" id="drawerFlowIntensity">متوسط / طبيعي</span>
+                    </div>
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statBmi">مؤشر الجسم (BMI):</span>
+                        <span class="stat-val" id="drawerBmiVal">—</span>
+                    </div>
+                    <div class="stat-item" style="padding: 6px 0;">
+                        <span class="stat-label" data-i18n="statTotalCycles">إجمالي الدورات المسجلة:</span>
+                        <span class="stat-val" id="drawerTotalCycles">0</span>
+                    </div>
+                </div>
+
+                <div class="wellness-card drawer-card" style="margin-top: 10px; background: linear-gradient(135deg, var(--primary-glow), rgba(245, 158, 11, 0.08));">
+                    <div class="wellness-card-header">
+                        <h4>🛡️ <span data-i18n="securityTitle">رعاية صحية وأمان تام</span></h4>
+                    </div>
+                    <div style="font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary);" data-i18n="careSummaryText">
+                        👑 <strong>تخصيص الألوان والسمات:</strong> تحكم كامل في مظهر التطبيق<br>
+                        🌸 <strong>محرك توقع ذكي:</strong> حساب مرجح دقيق لمواعيد الدورة<br>
+                        ⭐ <strong>تتبع التبويض:</strong> تنبيهات وأعراض نافذة الخصوبة<br>
+                        🩸 <strong>كمية النزيف:</strong> تتبع تدفق الدم والألم
+                    </div>
+                </div>
+            </div>
+
             <!-- SECTION 2: 🛠️ Tools & Reports -->
             <div class="drawer-section">
                 <div class="drawer-section-title">
                     <span>🛠️</span>
                     <span data-i18n="drawerToolsTitle">الأدوات والتقارير الطبية</span>
                 </div>
+
+                <!-- 📋 User Cycles Records & Deletion Button -->
+                <button class="drawer-nav-btn" onclick="switchTab('historyTab', event); toggleAppDrawer(false);" title="Manage & Delete Cycles">
+                    <div class="btn-left">
+                        <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        <span data-i18n="drawerHistoryBtn">📋 سجلات وحذف الدورات</span>
+                    </div>
+                    <span>➔</span>
+                </button>
 
                 <!-- 📄 Doctor Medical Report Button -->
                 <button class="drawer-nav-btn" onclick="openMedicalReportModal(); toggleAppDrawer(false);" title="Doctor Medical Report">
@@ -1909,12 +1992,19 @@
                                     <th data-i18n="thFlow">غزارة النزيف</th>
                                     <th data-i18n="thPainLevel">مستوى الألم</th>
                                     <th data-i18n="thSymptoms">الأعراض والتبويض</th>
+                                    <th data-i18n="thActions">إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="dashMiniTableBody">
-                                <tr><td colspan="7" style="text-align:center;" data-i18n="loading">جاري التحميل...</td></tr>
+                                <tr><td colspan="8" style="text-align:center;" data-i18n="loading">جاري التحميل...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
+                        <button class="btn-action" onclick="switchTab('historyTab', event)" style="width: 100%; justify-content: center; padding: 10px 16px;">
+                            <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                            <span data-i18n="btnViewAllHistory">📋 إدارة وحذف السجلات بالتفصيل</span>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -2405,7 +2495,9 @@ const ALL_LOCALES = {
     drawerToolsTitle: "الأدوات والتقارير الطبية",
     drawerCustomizationTitle: "المظهر واللغة",
     drawerThemesLabel: "ثيم وألوان المنصة:",
-    drawerLangLabel: "لغة الواجهة (Language):"
+    drawerLangLabel: "لغة الواجهة (Language):",
+    drawerHistoryBtn: "📋 سجلات وحذف الدورات",
+    btnViewAllHistory: "📋 إدارة وحذف السجلات بالتفصيل"
   },
   en: {
     appTitle: "SAFE Period Tracker",
@@ -2622,7 +2714,9 @@ const ALL_LOCALES = {
     drawerToolsTitle: "Tools & Medical Reports",
     drawerCustomizationTitle: "Appearance & Language",
     drawerThemesLabel: "Theme & Accent Color:",
-    drawerLangLabel: "Interface Language:"
+    drawerLangLabel: "Interface Language:",
+    drawerHistoryBtn: "📋 Cycle History & Deletion",
+    btnViewAllHistory: "📋 Manage & Delete Detailed Records"
   },
   fr: {
     appTitle: "SAFE Suivi des Règles",
@@ -2839,7 +2933,9 @@ const ALL_LOCALES = {
     drawerToolsTitle: "Outils & Rapports Médicaux",
     drawerCustomizationTitle: "Apparence & Langue",
     drawerThemesLabel: "Thème et Couleurs :",
-    drawerLangLabel: "Langue de l'interface :"
+    drawerLangLabel: "Langue de l'interface :",
+    drawerHistoryBtn: "📋 Historique & Suppression des Cycles",
+    btnViewAllHistory: "📋 Gérer & Supprimer les Enregistrements Détaillés"
   },
   de: {
     appTitle: "SAFE Perioden-Tracker",
@@ -3056,7 +3152,9 @@ const ALL_LOCALES = {
     drawerToolsTitle: "Tools & Medizinische Berichte",
     drawerCustomizationTitle: "Erscheinungsbild & Sprache",
     drawerThemesLabel: "Design & Akzentfarben:",
-    drawerLangLabel: "Sprache der Benutzeroberfläche:"
+    drawerLangLabel: "Sprache der Benutzeroberfläche:",
+    drawerHistoryBtn: "📋 Zyklusverlauf & Einträge löschen",
+    btnViewAllHistory: "📋 Detaillierte Einträge verwalten & löschen"
   },
   sw: {
     appTitle: "SAFE Mfuatiliaji wa Hedhi",
@@ -3273,7 +3371,9 @@ const ALL_LOCALES = {
     drawerToolsTitle: "Zana na Ripoti za Matibabu",
     drawerCustomizationTitle: "Muonekano na Lugha",
     drawerThemesLabel: "Mandhari na Rangi:",
-    drawerLangLabel: "Lugha ya Mfumo:"
+    drawerLangLabel: "Lugha ya Mfumo:",
+    drawerHistoryBtn: "📋 Historia ya Mizunguko na Kufuta",
+    btnViewAllHistory: "📋 Simamia na Futa Kumbukumbu za Kina"
   }
 };
 
@@ -4526,11 +4626,19 @@ class ManagerService {
       (norm.includes('ايه') || norm.includes('طبيعي') || norm.includes('هل') || norm.includes('علاج') || norm.includes('نصيح') || norm.includes('دليل'))
     );
 
+    const isDelayedPeriodQuery = (
+      norm.includes('تاخرت') || norm.includes('متاخره') || norm.includes('متأخرة') || norm.includes('تأخرت') || 
+      norm.includes('تأخير') || norm.includes('تاخير') || norm.includes('ما نزلت') || norm.includes('مانزلت') || 
+      norm.includes('ما جات') || norm.includes('ماجات') || norm.includes('ماجت') || norm.includes('مش راضية تنزل') ||
+      norm.includes('الدورة متأخرة') || norm.includes('الدوره متاخره') ||
+      text.includes('late period') || text.includes('delayed period') || text.includes('period is late') || text.includes('missed period')
+    );
+
     const isIrregularCycleQuery = (
       norm.includes('غير منتظم') || norm.includes('مش منتظم') || norm.includes('عدم انتظام') || 
-      norm.includes('متاخر') || norm.includes('تاخر') || norm.includes('لخبط') || norm.includes('هرمون') || norm.includes('تكيس') || 
-      text.includes('irregular') || text.includes('late period') || text.includes('delayed') || text.includes('pcos')
-    );
+      norm.includes('لخبط') || norm.includes('هرمون') || norm.includes('تكيس') || 
+      text.includes('irregular') || text.includes('pcos')
+    ) && !isDelayedPeriodQuery;
 
     const isWorkoutQuery = (
       norm.includes('رياض') || norm.includes('جيم') || norm.includes('تمرين') || 
@@ -4657,6 +4765,12 @@ class ManagerService {
       return isAr
         ? `🩸 **دليل غزارة النزيف وتدفق الدم وتجلطات الدورة يا ${userDisplayName}:**\n\n1. 📊 **ما هو التدفق الطبيعي؟**\n   - من الطبيعي أن يكون النزيف غزيراً في أول 24-48 ساعة، حيث يفرز الرحم إنزيمات مضادة للتجلط، ولكن مع سرعة التدفق قد تظهر كتل دموية صغيرة (أصغر من حجم عملة معدنية)، وهو أمر شائع ولا يستدعي القلق.\n\n2. 🥗 **بروتوكول العناية وتعويض الحديد:**\n   - **شرب 2.5 إلى 3 لتر سوائل:** لتعويض حجم البلازما ومنع هبوط الضغط والدوخة.\n   - **أطعمة تعزيز الهيموجلوبين:** السبانخ، العدس، الكبدة، الشمندر، اللحوم الحمراء.\n   - **فيتامين C (برتقال، ليمون، كيوي):** ضروري لامتصاص الحديد بنسبة 3 أضعاف.\n\n3. ⚠️ **متى يجب استشارة الطبيبة المختصة؟**\n   - إذا كنتِ بحاجة لتغيير فوطة صحية مشبعة بالكامل كل ساعة واحدة لأكثر من ساعتين متتاليتين.\n   - إذا استمر النزيف الغزير لأكثر من 7 أيام متواصلة 💕`
         : `🩸 **Flow Volume & Heavy Bleeding Medical Insights:**\n\n- Heavy bleeding in the first 24-48 hours with small clots is very common.\n- Drink 2.5-3L of warm fluids and focus on iron-rich foods with Vitamin C.\n- ⚠️ Consult a doctor if soaking through a pad every hour for 2+ consecutive hours 💕`;
+    }
+
+    if (isDelayedPeriodQuery) {
+      return isAr
+        ? `🌸 **دليل أسباب تأخر الدورة الشهرية واستشارة الطبيبة يا ${userDisplayName}:** 💕\n\n1. 🧘‍♀️ **أسباب شائعة وطبيعية للتأخر المؤقت (من 3 إلى 7 أيام):**\n   - **التوتر وضغوطات الحياة:** إفراز هرمون الكورتيزول يثبط مؤقتاً الإشارات الهرمونية لتحفيز التبويض في المبيض.\n   - **تغير مواعيد النوم والسفر والإرهاق البدني.**\n   - **تقلبات الوزن أو الحميات الغذائية القاسية.**\n   - **الحمل (للمتزوجات):** إجراء اختبار حمل منزلي بعد أسبوع من تأخر موعد الدورة.\n\n2. 👩‍⚕️ **متى وأهمية استشارة طبيبة النساء المتخصصة؟**\n   - **إذا تأخرت الدورة أكثر من 7 إلى 10 أيام:** يُنصح بحجز استشارة لدى طبيبة النساء للاطمئنان وعمل فحص هرموني أساسي (تحليل هرمون الغدة الدرقية TSH، هرمون الحليب Prolactin، وسونار للمبايض لاستبعاد تكيس المبايض PCOS).\n   - **إذا تكرر التأخر في عدة دورات متتالية أو غابت الدورة لأكثر من 45 يوماً.**\n\n3. 📄 **ميزة تقرير الطبيبة في تطبيق SAFE:**\n   - يمكنكِ فتح زر **"📄 تقرير الطبيبة (Medical Report)"** من القائمة الجانبية للتطبيق، وطباعة أو عرض تقريركِ السريري الشامل لتقديمه لطبيبتكِ مباشرة لمساعدتها في التشخيص الدقيق.\n\n4. 🍵 **نصائح للعناية والاسترخاء الآن:**\n   - اشربي مشروب البردقوش الدافئ، القرفة، أو شاي النعناع والبابونج لتهدئة عضلات الرحم والأعصاب.\n   - خذي قسطاً كافياً من النوم والراحة وتجنبي القلق الزائد 💕`
+        : `🌸 **Delayed Period Insights & Medical Consultation Guide for ${userDisplayName}:** 💕\n\n- **Common Natural Causes:** Stress, sleep disruption, travel, diet changes, or pregnancy.\n- **👩‍⚕️ When to Consult a Gynecologist:** If your period is delayed by **7-10+ days** or if irregularities repeat, schedule a visit for routine hormone checks (TSH, Prolactin, Pelvic Ultrasound).\n- **📄 App Medical Summary Report:** Open the **"Doctor Medical Report"** from the side menu to show your logged cycle history directly to your doctor!\n- **🍵 Comfort:** Rest well and sip warm chamomile or marjoram tea 💕`;
     }
 
     if (isIrregularCycleQuery) {
@@ -4868,8 +4982,34 @@ class ManagerService {
       const painLevelToSave = entities.pain !== null ? entities.pain : (entities.hasExplicitPain ? 5 : null);
 
       let cycleLengthToSave = 28;
+      let calculatedDiffDays = null;
+      let matchedPrevDate = null;
+      const currDateObj = new Date(detectedDate);
+
       if (entities.hasExplicitCycle) {
         cycleLengthToSave = entities.cycleLength;
+      } else if (existingCycles.length > 0) {
+        // Find past cycles with last_period_date strictly before detectedDate
+        const pastCycles = existingCycles.filter(c => c.last_period_date && new Date(c.last_period_date) < currDateObj);
+        if (pastCycles.length > 0) {
+          pastCycles.sort((a, b) => new Date(b.last_period_date) - new Date(a.last_period_date));
+          const prevDateObj = new Date(pastCycles[0].last_period_date);
+          const diffTime = currDateObj.getTime() - prevDateObj.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+          if (diffDays >= 10 && diffDays <= 120) {
+            calculatedDiffDays = diffDays;
+            matchedPrevDate = pastCycles[0].last_period_date;
+            cycleLengthToSave = diffDays;
+          } else if (analytics.avg_cycle_length) {
+            cycleLengthToSave = analytics.avg_cycle_length;
+          } else if (currentUser?.default_cycle_length) {
+            cycleLengthToSave = currentUser.default_cycle_length;
+          }
+        } else if (analytics.avg_cycle_length) {
+          cycleLengthToSave = analytics.avg_cycle_length;
+        } else if (currentUser?.default_cycle_length) {
+          cycleLengthToSave = currentUser.default_cycle_length;
+        }
       } else if (currentUser?.default_cycle_length) {
         cycleLengthToSave = currentUser.default_cycle_length;
       } else if (analytics.avg_cycle_length) {
@@ -4879,6 +5019,8 @@ class ManagerService {
       let periodLengthToSave = 5;
       if (entities.hasExplicitPeriod) {
         periodLengthToSave = entities.periodLength;
+      } else if (existingCycles.length > 0 && existingCycles[0].period_length) {
+        periodLengthToSave = existingCycles[0].period_length;
       } else if (currentUser?.default_period_length) {
         periodLengthToSave = currentUser.default_period_length;
       } else if (analytics.avg_period_length) {
@@ -4897,14 +5039,19 @@ class ManagerService {
       });
       const savedRecord = cycleRes.record;
 
+      const historicalAvg = (existingCycles.length > 0 && analytics.avg_cycle_length) ? analytics.avg_cycle_length : (currentUser?.default_cycle_length || 28);
+      const isDelayed = cycleLengthToSave >= 36 || (historicalAvg && cycleLengthToSave >= (historicalAvg + 5));
+      const isEarly = cycleLengthToSave < 21 || (historicalAvg && cycleLengthToSave <= (historicalAvg - 5));
+
       const detailsList = [];
       detailsList.push(`📅 **${isAr ? 'تاريخ بداية الدورة' : 'Cycle Start Date'}:** \`${savedRecord.last_period_date}\``);
       
-      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitPeriod)) {
+      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitPeriod || existingCycles.length > 0)) {
         detailsList.push(`🩸 **${isAr ? 'مدة الحيض' : 'Period Duration'}:** ${savedRecord.period_length} ${uDays}`);
       }
-      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitCycle)) {
-        detailsList.push(`🔄 **${isAr ? 'طول الدورة المعتاد' : 'Cycle Length'}:** ${savedRecord.cycle_length} ${uDays}`);
+      if (!isFirstTimeLogging && (hasCustomCycleSet || entities.hasExplicitCycle || calculatedDiffDays || existingCycles.length > 0)) {
+        const intervalNote = calculatedDiffDays && matchedPrevDate ? (isAr ? ` *(الفاصل منذ دورتكِ السابقة في ${matchedPrevDate})*` : ` *(interval since ${matchedPrevDate})*`) : '';
+        detailsList.push(`🔄 **${isAr ? 'طول هذه الدورة' : 'Cycle Length'}:** ${savedRecord.cycle_length} ${uDays}${intervalNote}`);
       }
 
       if (entities.hasExplicitFlow) {
@@ -4926,6 +5073,28 @@ class ManagerService {
 
       if (entities.ovuSymptoms.length > 0) {
         detailsList.push(`⭐ **${isAr ? 'أعراض التبويض' : 'Ovulation Signs'}:** ${entities.ovuSymptoms.join('، ')}`);
+      }
+
+      // Smart Clinical Analysis & Delayed/Early Cycle Guidance
+      let cycleAnalysisSection = '';
+      const daysDelayed = Math.max(0, cycleLengthToSave - (historicalAvg || 28));
+      if (isDelayed) {
+        const isMajorDelay = daysDelayed >= 7 || cycleLengthToSave >= 37;
+        const doctorAdviceNote = isMajorDelay
+          ? (isAr 
+              ? `\n\n👩‍⚕️ **نصيحة طبية واستشارة الطبيبة المختصة:**\nنظراً لأن دورتكِ تأخرت لأكثر من ${daysDelayed > 0 ? `${daysDelayed} أيام` : '7-10 أيام'} (استغرقت ${cycleLengthToSave} يوماً)، فمن المهم والمطمئن لكِ مراجعة واستشارة طبيبة نساء وتوليد للاطمئنان على التوازن الهرموني وعمل الفحوصات الأساسية (مثل فحص وظائف الغدة الدرقية TSH، هرمون الحليب Prolactin، وسونار المبيضين للتأكد من عدم وجود تكيسات PCOS).\n💡 **ملاحظة ذكية:** يمكنكِ فتح **"📄 تقرير الطبيبة (Medical Report)"** من القائمة الجانبية وطباعة أو عرض تقريركِ السريري الشامل لتقديمه لطبيبتكِ مباشرة لمساعدتها في التشخيص الدقيق!`
+              : `\n\n👩‍⚕️ **Clinical Recommendation (Doctor Consultation):**\nSince your delay reached ${daysDelayed > 0 ? `${daysDelayed} days` : '7+ days'} (${cycleLengthToSave} days total), it is strongly advised to schedule a consultation with a gynecologist for a routine hormonal evaluation (TSH, Prolactin, ovarian ultrasound). You can generate and present your **Doctor Medical Report** from the side menu!`)
+          : (isAr
+              ? `\n\n💡 **نصيحة طبية:** إذا استمر التأخر لأكثر من 7 إلى 10 أيام أو تكرر في الدورات القادمة، يُنصح باستشارة طبيبة نساء للاطمئنان العام وعرض تقرير الطبيبة المتوفر في القائمة الجانبية.`
+              : `\n\n💡 **Medical Note:** If delay persists past 7-10 days, consult a gynecologist.`);
+
+        cycleAnalysisSection = isAr
+          ? `\n\n🌸 **تحليل ذكي وملاحظة طبية لطيفة (تأخر الدورة):**\nلاحظت يا جميلة أن دورتكِ هذه المرة استغرقت **${cycleLengthToSave} يوماً**${matchedPrevDate ? ` *(منذ دورتكِ السابقة في ${matchedPrevDate})*` : ''} - أي متأخرة ${daysDelayed > 0 ? `بمقدار ${daysDelayed} يوماً ` : ''}عن متوسط دوراتكِ المعتاد${historicalAvg ? ` (${historicalAvg} يوماً)` : ''}.\nلا تقلقي إطلاقاً يا قمر 💕؛ فتأخر الدورة لأيام أمر شائع وطبيعي جداً ويحدث لمعظم النساء نتيجة:\n- 🧘‍♀️ **التوتر أو الإجهاد الذهني أو البدني:** يؤثر مؤقتاً على إشارات التبويض الهرمونية.\n- 😴 **تغير نمط وساعات النوم أو السفر أو الإرهاق.**\n- 🥗 **تغيرات في التغذية والشهية أو الوزن.**\n- 🌿 **نصائح للعناية والراحة:** استرخي تماماً، واشربي مشروبات دافئة مهدئة (مثل البردقوش والنعناع والبابونج والقرفة)، وخذي قسطاً وافياً من النوم والراحة.${doctorAdviceNote}`
+          : `\n\n🌸 **Smart Clinical Analysis (Delayed Period):**\nI noticed that your cycle arrived after **${cycleLengthToSave} days**${matchedPrevDate ? ` *(since ${matchedPrevDate})*` : ''} - delayed by ${daysDelayed} days from your average${historicalAvg ? ` (${historicalAvg} days)` : ''}.\nDo not worry sweetie 💕; occasional cycle delays are very common due to stress, fatigue, travel, or sleep changes.\n- 🧘‍♀️ **Self-care:** Rest well, sip warm herbal tea (chamomile/mint), and stay cozy.${doctorAdviceNote}`;
+      } else if (isEarly) {
+        cycleAnalysisSection = isAr
+          ? `\n\n🌸 **تحليل ذكي وملاحظة طبية لطيفة (تقدم موعد الدورة):**\nلاحظت يا قمر أن دورتكِ جاءت مبكرة بعد **${cycleLengthToSave} يوماً**. تقدم الدورة بشكل عارض أمر طبيعي جداً قد ينتج عن إجهاد خفيف أو تقلب هرموني مؤقت، ارتاحي واعتني بنفسكِ اليوم 💕`
+          : `\n\n🌸 **Smart Clinical Analysis (Early Period):**\nYour cycle arrived earlier after **${cycleLengthToSave} days**. This is normal with mild stress or hormonal shifts. Take it easy and rest today 💕`;
       }
 
       const missingQuestions = [];
@@ -5009,7 +5178,7 @@ class ManagerService {
         ? `\n\n💖 **تذكري:** أنتِ قوية ورائعة، خدي راحة تامة وما تشيليش هم أي حاجة.. أنا معاكِ دايماً!`
         : `\n\n💖 **Remember:** You are strong and wonderful, take lots of rest and be gentle with yourself today!`;
 
-      const reply = `${heading}\n\n${detailsList.join('\n')}\n\n🔮 **موعد دورتكِ القادمة:** \`${nextPStr}\`\n⭐ **يوم التبويض المتوقع:** \`${ovuStr}\`${forecastNote}${tipsSection}${followUpPrompt}${encouragementFooter}`;
+      const reply = `${heading}\n\n${detailsList.join('\n')}\n\n🔮 **موعد دورتكِ القادمة:** \`${nextPStr}\`\n⭐ **يوم التبويض المتوقع:** \`${ovuStr}\`${forecastNote}${cycleAnalysisSection}${tipsSection}${followUpPrompt}${encouragementFooter}`;
 
       const history = this.getChatHistory(username);
       history.push({ role: 'user', content: raw });
@@ -5865,7 +6034,7 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                             const cAvg = parseInt(c.cycle_length || 28, 10);
                             const cOvuDate = addDaysToDateStr(c.last_period_date, cAvg - 14);
                             if (cOvuDate === dayStr && c.ovulation_symptoms) {
-                                badgeHtml += `<span class="cal-badge cal-badge-ovulation" title="${c.ovulation_symptoms}">⭐ ${c.ovulation_symptoms.split('،')[0]}</span>`;
+                                badgeHtml += `<span class="cal-badge cal-badge-ovulation" title="${c.ovulation_symptoms}">⭐ ${currentLang === 'ar' ? 'تبويض' : 'Ovulation'}</span>`;
                             }
                         });
                     }
@@ -6085,11 +6254,18 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             document.querySelectorAll('.desktop-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             
-            if (ev) ev.currentTarget.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+            if (ev && ev.currentTarget && ev.currentTarget.classList) {
+                ev.currentTarget.classList.add('active');
+            } else {
+                const matchedBtn = document.querySelector(`.desktop-tabs .tab-btn[onclick*="${tabId}"]`);
+                if (matchedBtn) matchedBtn.classList.add('active');
+            }
+            const targetEl = document.getElementById(tabId);
+            if (targetEl) targetEl.classList.add('active');
 
             if (tabId === 'calendarTab') renderCalendar();
             if (tabId === 'historyTab' || tabId === 'dashboardTab') loadMyUserData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         window.switchMobileNav = function(tabId, btn) {
@@ -6114,12 +6290,20 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                         ? `إجمالي الدورات: ${ana.total_cycles} | متوسط الدورة المرجح: ${ana.avg_cycle_length} ${uDays} | مدة الحيض: ${ana.avg_period_length} ${uDays} ${ana.user_profile.bmi ? '| BMI: ' + ana.user_profile.bmi : ''}`
                         : `Total: ${ana.total_cycles} | Weighted Cycle: ${ana.avg_cycle_length} ${uDays} | Avg Period: ${ana.avg_period_length} ${uDays} ${ana.user_profile.bmi ? '| BMI: ' + ana.user_profile.bmi : ''}`;
 
-                    document.getElementById('widgetLastDate').innerText = ana.latest_period_date || '—';
-                    document.getElementById('widgetCycleLength').innerText = `${ana.avg_cycle_length} ${uDays}`;
-                    document.getElementById('widgetPeriodLength').innerText = `${ana.avg_period_length} ${uDays}`;
-                    document.getElementById('widgetFlowIntensity').innerText = ana.latest_flow_intensity || (currentLang === 'ar' ? 'متوسط / طبيعي' : 'Medium');
-                    document.getElementById('widgetBmiVal').innerText = ana.user_profile.bmi ? `${ana.user_profile.bmi}` : '—';
-                    document.getElementById('widgetTotalCycles').innerText = ana.total_cycles;
+                    const setElText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+                    setElText('widgetLastDate', ana.latest_period_date || '—');
+                    setElText('widgetCycleLength', `${ana.avg_cycle_length} ${uDays}`);
+                    setElText('widgetPeriodLength', `${ana.avg_period_length} ${uDays}`);
+                    setElText('widgetFlowIntensity', ana.latest_flow_intensity || (currentLang === 'ar' ? 'متوسط / طبيعي' : 'Medium'));
+                    setElText('widgetBmiVal', ana.user_profile.bmi ? `${ana.user_profile.bmi}` : '—');
+                    setElText('widgetTotalCycles', ana.total_cycles);
+
+                    setElText('drawerLastDate', ana.latest_period_date || '—');
+                    setElText('drawerCycleLength', `${ana.avg_cycle_length} ${uDays}`);
+                    setElText('drawerPeriodLength', `${ana.avg_period_length} ${uDays}`);
+                    setElText('drawerFlowIntensity', ana.latest_flow_intensity || (currentLang === 'ar' ? 'متوسط / طبيعي' : 'Medium'));
+                    setElText('drawerBmiVal', ana.user_profile.bmi ? `${ana.user_profile.bmi}` : '—');
+                    setElText('drawerTotalCycles', ana.total_cycles);
 
                     const regBadge = document.getElementById('bannerRegularity');
                     const irregularCard = document.getElementById('irregularSupportCard');
@@ -6151,6 +6335,7 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     const miniTbody = document.getElementById('dashMiniTableBody');
                     if (ana.recent_cycles && ana.recent_cycles.length > 0) {
                         miniTbody.innerHTML = '';
+                        const delLabel = ALL_LOCALES[currentLang]?.deleteBtn || 'حذف';
                         ana.recent_cycles.forEach(c => {
                             let details = [];
                             if (c.pain_locations) details.push(`📍 ${c.pain_locations}`);
@@ -6166,6 +6351,11 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                                 <td>${c.flow_intensity || 'medium'}</td>
                                 <td>${c.pain_level ? `<span class="badge badge-primary">${c.pain_level}/10</span>` : '—'}</td>
                                 <td>${details.join(' | ') || '—'}</td>
+                                <td>
+                                    <button class="btn-delete" onclick="deleteMyCycleRecord(${c.id})" title="${delLabel}">
+                                        ${delLabel}
+                                    </button>
+                                </td>
                             `;
                             miniTbody.appendChild(tr);
                         });
@@ -6523,15 +6713,19 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
         };
 
         window.deleteMyCycleRecord = async function(id) {
-            const confirmMsg = currentLang === 'ar' ? 'هل أنتِ متأكدة من حذف هذه الدورة من حسابكِ؟' : 'Are you sure you want to delete this record?';
+            const confirmMsg = ALL_LOCALES[currentLang]?.deleteConfirm || (currentLang === 'ar' ? 'هل أنتِ متأكدة من حذف هذه الدورة من حسابكِ؟' : 'Are you sure you want to delete this record?');
             if (!confirm(confirmMsg)) return;
             try {
                 const data = await managerService.deleteCycle(id);
                 if (data.success) {
-                    loadMyUserData();
+                    await loadMyUserData();
                     checkPrePeriodNotifications();
+                    const deletedMsg = currentLang === 'ar' ? 'تم حذف السجل بنجاح' : 'Record deleted successfully';
+                    window.showToast(ALL_LOCALES[currentLang]?.deleteBtn || 'حذف', deletedMsg);
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error('Delete cycle error:', err);
+            }
         };
 
         window.handleKey = function(e) {
