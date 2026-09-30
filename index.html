@@ -1698,6 +1698,38 @@
         </div>
     </div>
 
+    <!-- 💌 Daily Affirmation & Emotional Support Modal -->
+    <div class="modal-overlay" id="dailyAffirmationModal" onclick="closeAffirmationModal(event)">
+        <div class="modal-card" style="max-width: 480px; text-align: center; border-radius: var(--radius-lg); padding: 26px;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="justify-content: space-between; border-bottom: none; padding: 0 0 10px 0;">
+                <h3 style="margin: 0; color: var(--primary); font-size: 1.15rem; display: flex; align-items: center; gap: 6px;">
+                    <span>💌</span>
+                    <span data-i18n="affirmationModalTitle">رسالتكِ التشجيعية لليوم 💌</span>
+                </h3>
+                <button class="btn-close-modal" onclick="closeAffirmationModal()">✕</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 10px 0;">
+                <div class="affirmation-icon" id="modalAffirmationIcon" style="font-size: 3.2rem; margin: 12px auto; animation: pulse 2s infinite;">🌸</div>
+                <div class="affirmation-text" id="modalAffirmationText" style="font-size: 1.05rem; font-weight: 700; line-height: 1.7; color: var(--text-primary); margin: 16px 0; min-height: 54px;">
+                    أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود هرموني عظيم.. دلعي نفسكِ وخدي راحة النهاردة 💕
+                </div>
+                <div class="affirmation-sub" id="modalAffirmationSub" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 22px;" data-i18n="affirmationSub">
+                    رسالة دعم نفسي وعناية أنثوية مخصصة لراحتكِ وسعادتكِ
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="getRandomAffirmation(true)" style="width: auto; padding: 10px 22px; font-size: 0.88rem;">
+                        🔄 <span data-i18n="btnNewAffirmation">رسالة جديدة</span>
+                    </button>
+                    <button class="btn-action" onclick="closeAffirmationModal()" style="padding: 10px 22px; font-size: 0.88rem;">
+                        <span data-i18n="btnClose">إغلاق</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
 
         <!-- ============================================== -->
@@ -1756,6 +1788,16 @@
                         <div class="form-group">
                             <label data-i18n="labelHeight">الطول (سم):</label>
                             <input type="number" id="regHeight" class="form-control" placeholder="165" min="100" max="220">
+                        </div>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: -4px;">
+                        <div class="form-group">
+                            <label data-i18n="labelDefaultCycle">طول الدورة المعتاد (أيام):</label>
+                            <input type="number" id="regDefaultCycle" class="form-control" placeholder="28" min="15" max="60" value="28">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="labelDefaultPeriod">مدة الحيض المعتادة (أيام):</label>
+                            <input type="number" id="regDefaultPeriod" class="form-control" placeholder="5" min="2" max="15" value="5">
                         </div>
                     </div>
                     <div class="form-group">
@@ -1819,7 +1861,11 @@
                                 </h2>
                                 <span style="font-size: 0.78rem; color: var(--text-secondary);" data-i18n="chatSub">دعم نفسي وتسكين ألم وتتبع آمن</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn-action" onclick="openAffirmationModal()" title="رسالة تشجيعية يومية" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px; display: flex; align-items: center; gap: 4px; background: var(--primary-glow); border-color: var(--primary);">
+                                    <span>💌</span>
+                                    <span data-i18n="btnDailyAffirmation">رسالة اليوم 💌</span>
+                                </button>
                                 <button class="btn-action" onclick="openAISettingsModal()" title="إعدادات الذكاء الاصطناعي (سارة الذكية أو ربط ChatGPT / OpenAI)" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px; display: flex; align-items: center; gap: 4px;">
                                     <span>⚙️</span>
                                     <span data-i18n="btnAISettings">إعدادات الذكاء الاصطناعي ⚙️</span>
@@ -1828,24 +1874,6 @@
                                     <span data-i18n="btnNewChat">جلسة جديدة ✨</span>
                                 </button>
                             </div>
-                        </div>
-
-                        <!-- 💌 Compact Daily Support Affirmation Banner (Mobile & Desktop) -->
-                        <div class="encouragement-card compact-affirmation" id="dailyAffirmationBox" style="margin: 0 0 10px 0;">
-                            <div class="affirmation-content">
-                                <div class="affirmation-icon" id="affirmationIcon">🌸</div>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div class="affirmation-text" id="affirmationText">
-                                        أنتِ جميلة وقوية، وجسمكِ بيعمل مجهود هرموني عظيم.. دلعي نفسكِ وخدي راحة النهاردة 💕
-                                    </div>
-                                    <div class="affirmation-sub" id="affirmationSub" data-i18n="affirmationSub">
-                                        رسالة تشجيعية يومية مخصصة لدعمكِ وراحتكِ النفسية
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="btn-new-affirmation" onclick="getRandomAffirmation(true)">
-                                🔄 <span data-i18n="btnNewAffirmation">رسالة جديدة</span>
-                            </button>
                         </div>
 
                         <div class="chat-messages" id="chatMessages">
@@ -2193,7 +2221,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label data-i18n="labelPeriodDate">تاريخ بداية الدورة:</label>
-                                <input type="date" id="manualDate" class="form-control" required>
+                                <input type="date" id="manualDate" class="form-control" oninput="onManualDateChange(this.value)" required>
                             </div>
                             <div class="form-group">
                                 <label data-i18n="labelCycleDays">طول الدورة (أيام):</label>
@@ -2203,6 +2231,9 @@
                                 <label data-i18n="labelPeriodDays">مدة الحيض (أيام):</label>
                                 <input type="number" id="manualPeriod" class="form-control" min="1" max="15" value="5" required>
                             </div>
+                        </div>
+                        <div id="manualAutoCalcBadge" style="margin-top: -6px; margin-bottom: 12px; font-size: 0.82rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                            <span>⚡</span> <span id="manualAutoCalcText">حددي تاريخ بداية الدورة ليتم حساب عدد الأيام تلقائياً من دورتكِ السابقة</span>
                         </div>
 
                         <!-- 🩸 Bleeding Flow Intensity Selector -->
@@ -2434,9 +2465,14 @@ const ALL_LOCALES = {
     quickDemoText: "أو تجربة حساب عميلة جاهز:",
     labelRegUsername: "اسم المستخدم الفريد (Username):",
     labelRegName: "الاسم بالكامل:",
+    labelDefaultCycle: "طول الدورة المعتاد (أيام):",
+    labelDefaultPeriod: "مدة الحيض المعتادة (أيام):",
     labelRegEmail: "البريد الإلكتروني (لحفظ واسترجاع الحساب من أي جهاز):",
     labelRegPassword: "كلمة المرور:",
     btnCreateAccount: "إنشاء حسابي وقاعدة بياناتي الخاصة",
+    btnDailyAffirmation: "رسالة اليوم 💌",
+    affirmationModalTitle: "رسالتكِ التشجيعية لليوم 💌",
+    autoCalculatedBadge: "⚡ محسوب تلقائياً من دورتكِ السابقة:",
     tabChat: "المساعد الذكي اللطيف",
     tabCalendar: "تقويم الدورة والتبويض",
     tabDashboard: "لوحة التحليلات الشخصية",
@@ -2665,9 +2701,14 @@ const ALL_LOCALES = {
     quickDemoText: "Or try a demo account:",
     labelRegUsername: "Unique Username:",
     labelRegName: "Full Name:",
+    labelDefaultCycle: "Typical Cycle Length (days):",
+    labelDefaultPeriod: "Typical Period Duration (days):",
     labelRegEmail: "Email Address (Required for cross-device cloud sync):",
     labelRegPassword: "Password:",
     btnCreateAccount: "Create My Private Account",
+    btnDailyAffirmation: "Daily Message 💌",
+    affirmationModalTitle: "Your Daily Affirmation 💌",
+    autoCalculatedBadge: "⚡ Auto-calculated from previous cycle:",
     tabChat: "Empathetic AI Copilot",
     tabCalendar: "Cycle & Ovulation Calendar",
     tabDashboard: "Personal Analytics",
@@ -2896,9 +2937,14 @@ const ALL_LOCALES = {
     quickDemoText: "Ou essayer un compte démo:",
     labelRegUsername: "Nom d'utilisateur:",
     labelRegName: "Nom Complet:",
+    labelDefaultCycle: "Durée habituelle du cycle (jours) :",
+    labelDefaultPeriod: "Durée habituelle des règles (jours) :",
     labelRegEmail: "Adresse Email:",
     labelRegPassword: "Mot de passe:",
     btnCreateAccount: "Créer Mon Compte Privé",
+    btnDailyAffirmation: "Message du jour 💌",
+    affirmationModalTitle: "Votre Affirmation du Jour 💌",
+    autoCalculatedBadge: "⚡ Calculé automatiquement depuis votre cycle précédent :",
     tabChat: "Copilote IA Empathique",
     tabCalendar: "Calendrier du Cycle & Ovulation",
     tabDashboard: "Analyses Personnelles",
@@ -3127,9 +3173,14 @@ const ALL_LOCALES = {
     quickDemoText: "Oder Demo-Konto ausprobieren:",
     labelRegUsername: "Benutzername:",
     labelRegName: "Vollständiger Name:",
+    labelDefaultCycle: "Typische Zykluslänge (Tage):",
+    labelDefaultPeriod: "Typische Periodendauer (Tage):",
     labelRegEmail: "E-Mail-Adresse:",
     labelRegPassword: "Passwort:",
     btnCreateAccount: "Mein Privates Konto Erstellen",
+    btnDailyAffirmation: "Tagesbotschaft 💌",
+    affirmationModalTitle: "Deine Tägliche Ermutigung 💌",
+    autoCalculatedBadge: "⚡ Automatisch berechnet vom vorherigen Zyklus:",
     tabChat: "Einfühlsamer KI-Copilot",
     tabCalendar: "Zyklus- & Eisprungkalender",
     tabDashboard: "Persönliche Analysen",
@@ -3358,9 +3409,14 @@ const ALL_LOCALES = {
     quickDemoText: "Au jaribu akaunti ya mfano:",
     labelRegUsername: "Jina la Mtumiaji:",
     labelRegName: "Jina Kamili:",
+    labelDefaultCycle: "Urefu wa kawaida wa mzunguko (siku):",
+    labelDefaultPeriod: "Muda wa kawaida wa hedhi (siku):",
     labelRegEmail: "Barua pepe:",
     labelRegPassword: "Nenosiri:",
     btnCreateAccount: "Fungua Akaunti Yangu ya Kibinafsi",
+    btnDailyAffirmation: "Ujumbe wa Leo 💌",
+    affirmationModalTitle: "Ujumbe Wako wa Leo 💌",
+    autoCalculatedBadge: "⚡ Imekadiriwa kiotomatiki kutoka kwa mzunguko uliopita:",
     tabChat: "Msaidizi Mahiri wa AI",
     tabCalendar: "Kalenda ya Hedhi na Upevushaji",
     tabDashboard: "Uchambuzi wa Kibinafsi",
@@ -4117,6 +4173,8 @@ class ManagerService {
     }
 
     const cleanEmail = (userData.email || '').trim().toLowerCase();
+    const defaultCycle = userData.default_cycle_length ? parseInt(userData.default_cycle_length) : 28;
+    const defaultPeriod = userData.default_period_length ? parseInt(userData.default_period_length) : 5;
 
     const newUser = {
       id: Date.now(),
@@ -4128,8 +4186,8 @@ class ManagerService {
       weight: userWeight,
       height: userHeight,
       bmi: bmi,
-      default_cycle_length: 28,
-      default_period_length: 5,
+      default_cycle_length: (defaultCycle >= 15 && defaultCycle <= 60) ? defaultCycle : 28,
+      default_period_length: (defaultPeriod >= 1 && defaultPeriod <= 15) ? defaultPeriod : 5,
       created_at: new Date().toISOString()
     };
 
@@ -4169,6 +4227,8 @@ class ManagerService {
     user.height = height;
     user.bmi = bmi;
     if (profileData.display_name) user.display_name = profileData.display_name;
+    if (profileData.default_cycle_length) user.default_cycle_length = parseInt(profileData.default_cycle_length);
+    if (profileData.default_period_length) user.default_period_length = parseInt(profileData.default_period_length);
 
     this.setUser(user);
 
@@ -4187,29 +4247,90 @@ class ManagerService {
     return { success: true, count: cycles.length, cycles };
   }
 
+  calculateDaysSincePreviousCycle(userOrIdentifier, targetDate) {
+    const user = typeof userOrIdentifier === 'object' ? userOrIdentifier : this.getUser();
+    const defaultCycle = (user && user.default_cycle_length) ? parseInt(user.default_cycle_length) : 28;
+    if (!targetDate) {
+      return { hasPrev: false, prevDate: null, diffDays: defaultCycle, status: 'baseline', defaultCycle };
+    }
+
+    const cleanTarget = targetDate.split('T')[0];
+    const cycles = this.getLocalCycles(user);
+    const sorted = [...cycles].filter(c => c.last_period_date && c.last_period_date.split('T')[0] !== cleanTarget)
+      .sort((a, b) => new Date(b.last_period_date) - new Date(a.last_period_date));
+
+    const prev = sorted.find(c => new Date(c.last_period_date.split('T')[0]) < new Date(cleanTarget));
+    if (prev) {
+      const prevDate = prev.last_period_date.split('T')[0];
+      const diffMs = new Date(cleanTarget).getTime() - new Date(prevDate).getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      let status = 'regular';
+      if (diffDays > 35) status = 'delayed';
+      else if (diffDays < 21) status = 'short';
+      return { hasPrev: true, prevDate, diffDays, status, defaultCycle };
+    }
+
+    return { hasPrev: false, prevDate: null, diffDays: defaultCycle, status: 'baseline', defaultCycle };
+  }
+
   async logCycle(cyclePayload) {
     const user = this.getUser();
     if (!user) return { success: false, error: 'Not logged in' };
 
     const cycles = this.getLocalCycles(user);
+    const newDateStr = cyclePayload.last_period_date ? cyclePayload.last_period_date.split('T')[0] : '';
+    
+    // Auto-calculate cycle length based on previous recorded cycle
+    let calculatedCycleLength = cyclePayload.cycle_length ? parseInt(cyclePayload.cycle_length) : null;
+    let matchedPrevDate = null;
+    let isAutoCalculated = false;
+
+    if (newDateStr) {
+      const calcResult = this.calculateDaysSincePreviousCycle(user, newDateStr);
+      if (calcResult.hasPrev && calcResult.diffDays >= 10 && calcResult.diffDays <= 120) {
+        matchedPrevDate = calcResult.prevDate;
+        // If user did not pass a custom cycle or passed 28 or requested auto_calc
+        if (!calculatedCycleLength || calculatedCycleLength === 28 || cyclePayload.auto_calc) {
+          calculatedCycleLength = calcResult.diffDays;
+          isAutoCalculated = true;
+        }
+      }
+    }
+
+    if (!calculatedCycleLength || isNaN(calculatedCycleLength) || calculatedCycleLength <= 0) {
+      calculatedCycleLength = user.default_cycle_length || 28;
+    }
+
+    const defaultPeriodLen = user.default_period_length || 5;
+    const periodLen = parseInt(cyclePayload.period_length) || defaultPeriodLen;
+
     const newRecord = {
       id: Date.now(),
       user_id: user.username,
-      last_period_date: cyclePayload.last_period_date,
-      cycle_length: parseInt(cyclePayload.cycle_length || 28),
-      period_length: parseInt(cyclePayload.period_length || 5),
+      last_period_date: newDateStr,
+      cycle_length: calculatedCycleLength,
+      period_length: periodLen,
       pain_level: cyclePayload.pain_level ? parseInt(cyclePayload.pain_level) : null,
       pain_locations: Array.isArray(cyclePayload.pain_locations) ? cyclePayload.pain_locations.join(', ') : (cyclePayload.pain_locations || ''),
       flow_intensity: cyclePayload.flow_intensity || 'medium',
       ovulation_symptoms: Array.isArray(cyclePayload.ovulation_symptoms) ? cyclePayload.ovulation_symptoms.join(', ') : (cyclePayload.ovulation_symptoms || ''),
       symptoms: cyclePayload.symptoms || '',
+      is_auto_calculated: isAutoCalculated,
+      matched_prev_date: matchedPrevDate,
       created_at: new Date().toISOString()
     };
 
     cycles.unshift(newRecord);
     this.saveLocalCycles(user, cycles);
 
-    return { success: true, message: 'Saved successfully', record: newRecord };
+    return { 
+      success: true, 
+      message: 'Saved successfully', 
+      record: newRecord,
+      auto_calculated: isAutoCalculated,
+      calculated_days: calculatedCycleLength,
+      prev_cycle_date: matchedPrevDate
+    };
   }
 
   async updateLatestCycle(updates) {
@@ -6771,6 +6892,8 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const height = document.getElementById('regHeight')?.value || 165;
             const email = document.getElementById('regEmail')?.value?.trim() || '';
             const password = document.getElementById('regPassword')?.value || '123456';
+            const defaultCycle = document.getElementById('regDefaultCycle')?.value || 28;
+            const defaultPeriod = document.getElementById('regDefaultPeriod')?.value || 5;
 
             if (!email) {
                 alert(currentLang === 'ar' ? 'يرجى إدخال البريد الإلكتروني لحفظ واسترجاع الحساب من أي جهاز' : 'Please enter your email to enable cross-device account sync');
@@ -6785,7 +6908,9 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     weight,
                     height,
                     email,
-                    password
+                    password,
+                    default_cycle_length: defaultCycle,
+                    default_period_length: defaultPeriod
                 });
                 if (data && data.success) {
                     currentUser = data.user;
@@ -6796,6 +6921,59 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             } catch (err) {
                 console.warn('Registration error:', err);
                 alert(currentLang === 'ar' ? 'حدث خطأ أثناء إنشاء الحساب، يرجى المحاولة مجدداً' : 'Error creating account, please try again.');
+            }
+        };
+
+        window.openAffirmationModal = function() {
+            const modal = document.getElementById('dailyAffirmationModal');
+            if (modal) {
+                getRandomAffirmation(false);
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+            }
+        };
+
+        window.closeAffirmationModal = function(e) {
+            if (e && e.target && e.target !== e.currentTarget && !e.target.classList.contains('btn-close-modal')) return;
+            const modal = document.getElementById('dailyAffirmationModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+        };
+
+        window.onManualDateChange = function(dateVal) {
+            const user = currentUser || managerService.getUser();
+            const calc = managerService.calculateDaysSincePreviousCycle(user, dateVal);
+            const cycleInput = document.getElementById('manualCycle');
+            const periodInput = document.getElementById('manualPeriod');
+            const autoCalcText = document.getElementById('manualAutoCalcText');
+
+            if (calc && calc.hasPrev) {
+                if (cycleInput) cycleInput.value = calc.diffDays;
+                if (autoCalcText) {
+                    let statusLabel = '';
+                    if (calc.status === 'delayed') {
+                        statusLabel = currentLang === 'ar' ? ' ⚠️ (تأخر ملحوظ عن المعتاد)' : ' ⚠️ (Delayed cycle)';
+                    } else if (calc.status === 'short') {
+                        statusLabel = currentLang === 'ar' ? ' ⚠️ (أقصر من المعتاد)' : ' ⚠️ (Shorter cycle)';
+                    } else {
+                        statusLabel = currentLang === 'ar' ? ' 🟢 (دورة منتظمة ومثالية)' : ' 🟢 (Regular cycle)';
+                    }
+                    autoCalcText.innerHTML = currentLang === 'ar'
+                        ? `⚡ <strong>تم الحساب تلقائياً:</strong> ${calc.diffDays} يوماً منذ دورتكِ السابقة في ${calc.prevDate}${statusLabel}`
+                        : `⚡ <strong>Auto-calculated:</strong> ${calc.diffDays} days since previous cycle on ${calc.prevDate}${statusLabel}`;
+                }
+            } else {
+                if (cycleInput) cycleInput.value = (user?.default_cycle_length || 28);
+                if (autoCalcText) {
+                    autoCalcText.innerHTML = currentLang === 'ar'
+                        ? `⚡ <strong>الدورة الأولى:</strong> تم تعيين المعدل الاعتيادي (${user?.default_cycle_length || 28} يوماً)`
+                        : `⚡ <strong>First Cycle:</strong> Using default baseline (${user?.default_cycle_length || 28} days)`;
+                }
+            }
+            if (periodInput && !periodInput.value) {
+                periodInput.value = user?.default_period_length || 5;
             }
         };
 
@@ -6945,11 +7123,20 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                             if (c.ovulation_symptoms) details.push(`<span class="badge badge-gold">⭐ ${c.ovulation_symptoms}</span>`);
                             if (c.symptoms) details.push(`📝 ${c.symptoms}`);
 
+                            let cycleBadge = `<span class="badge badge-gold">${c.cycle_length} ${uDays}</span>`;
+                            if (c.cycle_length > 35) {
+                                cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر' : 'Delayed'})</span>`;
+                            } else if (c.cycle_length < 21) {
+                                cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'مبكرة' : 'Early'})</span>`;
+                            } else {
+                                cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${c.cycle_length} ${uDays}</span>`;
+                            }
+
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td><span class="badge badge-primary">#${c.id}</span></td>
                                 <td>📅 ${c.last_period_date}</td>
-                                <td><span class="badge badge-gold">${c.cycle_length} ${uDays}</span></td>
+                                <td>${cycleBadge}</td>
                                 <td>${c.period_length} ${uDays}</td>
                                 <td>${c.flow_intensity || 'medium'}</td>
                                 <td>${c.pain_level ? `<span class="badge badge-primary">${c.pain_level}/10</span>` : '—'}</td>
@@ -6980,12 +7167,25 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                         if (item.ovulation_symptoms) details.push(`<span class="badge badge-gold" style="display:inline-block; margin-top:2px;">⭐ ${item.ovulation_symptoms}</span>`);
                         if (item.symptoms) details.push(`📝 ${item.symptoms}`);
 
+                        let cycleBadge = `<span class="badge badge-gold">${item.cycle_length} ${uDays}</span>`;
+                        if (item.cycle_length > 35) {
+                            cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر ملحوظ' : 'Delayed'})</span>`;
+                        } else if (item.cycle_length < 21) {
+                            cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'أقصر من المعتاد' : 'Short'})</span>`;
+                        } else {
+                            cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'منتظمة' : 'Regular'})</span>`;
+                        }
+
+                        const intervalNote = item.matched_prev_date
+                            ? `<div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 3px;">⚡ ${currentLang === 'ar' ? 'فاصل عن دورة' : 'From'} ${item.matched_prev_date}</div>`
+                            : '';
+
                         const tr = document.createElement('tr');
                         const createdFormatted = item.created_at ? new Date(item.created_at).toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : '—';
                         tr.innerHTML = `
                             <td><span class="badge badge-primary">#${item.id}</span></td>
                             <td>📅 <strong>${item.last_period_date}</strong></td>
-                            <td><span class="badge badge-gold">${item.cycle_length} ${uDays}</span></td>
+                            <td>${cycleBadge}${intervalNote}</td>
                             <td>${item.period_length} ${uDays}</td>
                             <td>${item.flow_intensity || 'medium'}</td>
                             <td>${item.pain_level ? `<span class="badge badge-primary">${item.pain_level}/10</span>` : '—'}</td>
