@@ -1,5 +1,5 @@
 // SAFE Health - Universal Serverless AI Chat Endpoint (Groq / Gemini / OpenAI / OpenRouter / Custom)
-async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -212,6 +212,3 @@ async function handler(req, res) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
-
-module.exports = handler;
-module.exports.default = handler;
