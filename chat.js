@@ -1,4 +1,4 @@
-// SAFE Health - Universal Serverless AI Chat Endpoint (Groq / OpenAI / OpenRouter / Custom)
+// SAFE Health - Universal Serverless AI Chat Endpoint (Groq / Gemini / OpenAI / OpenRouter / Custom)
 async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38,11 +38,14 @@ async function handler(req, res) {
     // 1. Resolve API Key from request body or Vercel Environment Variables
     let rawKey = (customKey && customKey.trim()) ||
                  process.env.GROQ_API_KEY || process.env.GROQ_KEY || process.env.GROQ_APIKEY ||
+                 process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY ||
                  process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.OPENAI_APIKEY ||
                  process.env.AI_API_KEY || process.env.AI_KEY || process.env.API_KEY ||
                  process.env.OPENROUTER_API_KEY;
 
-    if (rawKey) rawKey = rawKey.trim();
+    if (rawKey) {
+      rawKey = rawKey.trim().replace(/[\r\n\t]/g, '').replace(/^["']|["']$/g, '');
+    }
 
     if (!rawKey) {
       return res.status(200).json({
@@ -52,29 +55,54 @@ async function handler(req, res) {
       });
     }
 
-    // 2. Auto-detect Provider, URL, and Model
-    const isGroq = rawKey.startsWith('gsk_') || Boolean(process.env.GROQ_API_KEY || process.env.GROQ_KEY) || (customUrl && customUrl.includes('groq'));
-    const isOpenRouter = rawKey.startsWith('sk-or-') || (customUrl && customUrl.includes('openrouter.ai'));
-    const isOpenAI = !isGroq && !isOpenRouter;
+    // 2. Auto-detect Provider, URL, and Candidate Models
+    const isGemini = rawKey.startsWith('AIzaSy') || Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) || (customUrl && customUrl.includes('generativelanguage.googleapis.com'));
+    const isGroq = !isGemini && (rawKey.startsWith('gsk_') || Boolean(process.env.GROQ_API_KEY || process.env.GROQ_KEY) || (customUrl && customUrl.includes('groq')));
+    const isOpenRouter = !isGemini && !isGroq && (rawKey.startsWith('sk-or-') || (customUrl && customUrl.includes('openrouter.ai')));
+    const isOpenAI = !isGemini && !isGroq && !isOpenRouter;
 
     let apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    let model = 'llama-3.3-70b-versatile';
+    let candidateModels = [];
 
-    if (isGroq) {
+    if (isGemini) {
+      apiUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      candidateModels = [
+        customModel,
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+      ];
+    } else if (isGroq) {
       apiUrl = customUrl && customUrl.includes('groq') ? customUrl : 'https://api.groq.com/openai/v1/chat/completions';
-      model = (customModel || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').trim();
+      candidateModels = [
+        customModel,
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'llama3-8b-8192',
+        'llama3-70b-8192',
+        'gemma2-9b-it',
+        'mixtral-8x7b-32768'
+      ];
     } else if (isOpenRouter) {
       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-      model = customModel || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+      candidateModels = [
+        customModel,
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'google/gemini-2.0-flash-lite-preview-02-05:free'
+      ];
     } else {
       // OpenAI ChatGPT
       apiUrl = customUrl && customUrl.includes('openai.com') ? customUrl : 'https://api.openai.com/v1/chat/completions';
-      if (customModel && customModel.startsWith('gpt-')) {
-        model = customModel;
-      } else {
-        model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-      }
+      candidateModels = [
+        customModel,
+        'gpt-4o-mini',
+        'gpt-4o',
+        'gpt-3.5-turbo'
+      ];
     }
+
+    candidateModels = [...new Set(candidateModels.filter(Boolean))];
 
     const todayDateStr = new Date().toISOString().split('T')[0];
     let contextStats = `\n- تاريخ اليوم الحالي في النظام: ${todayDateStr}`;
@@ -118,23 +146,8 @@ async function handler(req, res) {
       { role: 'user', content: message }
     ];
 
-    // Build list of candidate models to try
-    let candidateModels = [model];
-    if (isGroq) {
-      candidateModels = [
-        model,
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'llama3-8b-8192',
-        'llama3-70b-8192',
-        'gemma2-9b-it',
-        'mixtral-8x7b-32768'
-      ];
-    }
-    candidateModels = [...new Set(candidateModels.filter(Boolean))];
-
     let aiRes = null;
-    let chosenModel = model;
+    let chosenModel = candidateModels[0] || 'default';
     let lastErrorText = '';
 
     for (const cand of candidateModels) {
@@ -159,8 +172,8 @@ async function handler(req, res) {
         }
 
         lastErrorText = await aiRes.text().catch(() => '');
-        // If error is not a 404 (model not found), e.g. 401 unauthorized, break immediately
-        if (aiRes.status !== 404 && !lastErrorText.includes('does not exist')) {
+        // If error is not a 404/400 (model not found), e.g. 401 unauthorized, stop trying other models
+        if (aiRes.status !== 404 && aiRes.status !== 400 && !lastErrorText.includes('does not exist')) {
           break;
         }
       } catch (err) {
@@ -170,11 +183,12 @@ async function handler(req, res) {
 
     if (!aiRes || !aiRes.ok) {
       console.error('AI provider error:', aiRes?.status, lastErrorText);
+      const providerName = isGemini ? 'Google Gemini' : (isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI'));
       return res.status(200).json({
         success: false,
         configured: true,
-        provider: isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI'),
-        error: `AI provider returned status ${aiRes?.status || 500}: ${lastErrorText}`
+        provider: providerName,
+        error: `${providerName} error (${aiRes?.status || 500}): ${lastErrorText || 'Network / connection failure'}`
       });
     }
 
@@ -188,7 +202,7 @@ async function handler(req, res) {
     return res.status(200).json({
       success: true,
       configured: true,
-      provider: isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI'),
+      provider: isGemini ? 'Google Gemini' : (isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI')),
       model: chosenModel,
       reply: reply,
       ai_reply: reply
