@@ -62,11 +62,12 @@ async function handler(req, res) {
 
     if (isGroq) {
       apiUrl = customUrl && customUrl.includes('groq') ? customUrl : 'https://api.groq.com/openai/v1/chat/completions';
-      // Normalize model for Groq
-      if (customModel && !customModel.startsWith('gpt-') && !customModel.includes('/') && customModel !== 'llama-3.3-70b-versatile') {
-        model = customModel;
+      // Sanitize model for Groq - ensure valid active Groq model
+      const requestedModel = (customModel || process.env.GROQ_MODEL || '').trim();
+      if (requestedModel && !requestedModel.startsWith('gpt-') && !requestedModel.includes('/') && !requestedModel.includes('versatile') && !requestedModel.includes('70b-versatile')) {
+        model = requestedModel;
       } else {
-        model = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+        model = 'llama-3.1-8b-instant';
       }
     } else if (isOpenRouter) {
       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
@@ -123,7 +124,7 @@ async function handler(req, res) {
       { role: 'user', content: message }
     ];
 
-    const aiRes = await fetch(apiUrl, {
+    let aiRes = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -136,6 +137,25 @@ async function handler(req, res) {
         max_tokens: 1000
       })
     });
+
+    // Auto-heal / fallback retry if provider returned 404/400 due to unsupported model
+    if (!aiRes.ok && isGroq && model !== 'llama-3.1-8b-instant') {
+      console.warn(`Groq returned status ${aiRes.status} for model ${model}, retrying with llama-3.1-8b-instant...`);
+      model = 'llama-3.1-8b-instant';
+      aiRes = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${rawKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: chatMessages,
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      });
+    }
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => '');

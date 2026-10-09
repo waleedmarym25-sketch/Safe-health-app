@@ -4940,6 +4940,12 @@ class ManagerService {
       customKey = localStorage.getItem('safe_custom_ai_key');
       customUrl = localStorage.getItem('safe_custom_ai_url');
       customModel = localStorage.getItem('safe_custom_ai_model');
+
+      // Auto-migrate outdated or 404-prone model names in localStorage
+      if (customModel && (customModel.includes('versatile') || customModel.includes('70b-versatile'))) {
+        customModel = 'llama-3.1-8b-instant';
+        localStorage.setItem('safe_custom_ai_model', 'llama-3.1-8b-instant');
+      }
     }
 
     let aiReply = null;
@@ -4980,13 +4986,16 @@ class ManagerService {
         const trimmedKey = customKey.trim();
         const isGroq = trimmedKey.startsWith('gsk_') || (customUrl && customUrl.includes('groq'));
         const activeUrl = customUrl || (isGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions');
-        const activeModel = customModel || (isGroq ? 'llama-3.1-8b-instant' : 'gpt-4o-mini');
+        let activeModel = customModel || (isGroq ? 'llama-3.1-8b-instant' : 'gpt-4o-mini');
+        if (isGroq && (activeModel.includes('versatile') || activeModel.startsWith('gpt-'))) {
+          activeModel = 'llama-3.1-8b-instant';
+        }
 
         const systemPrompt = isAr
           ? `أنتِ "سارة" (Sarah) 💕، رفيقة ذكية حنونة ومتخصصة في صحة المرأة والأنوثة والدعم النفسي لمنصة SAFE. تحدثي بلهجة دافئة مريحة وذكية كصديقة مقربة وطبيبة ناصحة في نفس الوقت. الاسم الحالي للمستخدمة: ${userDisplayName}. أجيبي عن أي موضوع يُطرح عليكِ برقي واهتمام واستخدمي التنسيق والإيموجي المناسب.`
           : `You are Sarah, an empathetic, highly intelligent AI health companion and supportive best friend for SAFE Platform. You speak with warmth, scientific accuracy, and deep empathy. The user's name is ${userDisplayName}.`;
 
-        const res = await fetch(activeUrl, {
+        let res = await fetch(activeUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -5001,6 +5010,27 @@ class ManagerService {
             temperature: 0.7
           })
         });
+
+        // Retry with llama-3.1-8b-instant if Groq returned 404
+        if (!res.ok && isGroq && activeModel !== 'llama-3.1-8b-instant') {
+          activeModel = 'llama-3.1-8b-instant';
+          res = await fetch(activeUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${trimmedKey}`
+            },
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                ...updatedHistory.slice(-10)
+              ],
+              temperature: 0.7
+            })
+          });
+        }
+
         if (res.ok) {
           const data = await res.json();
           aiReply = data?.choices?.[0]?.message?.content;
