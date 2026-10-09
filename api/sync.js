@@ -1,5 +1,5 @@
 // SAFE Health - 100% Free Cross-Device Cloud Sync Serverless Endpoint
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -13,21 +13,30 @@ export default async function handler(req, res) {
     return;
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_KEY;
 
   try {
     if (req.method === 'POST') {
       const { email, password, user, cycles = [] } = req.body || {};
       const cleanEmail = (email || user?.email || '').trim().toLowerCase();
+      const cleanUsername = (user?.username || cleanEmail.split('@')[0] || '').trim().toLowerCase();
 
-      if (!cleanEmail) {
-        return res.status(400).json({ success: false, error: 'Email is required for cloud sync' });
+      if (!cleanEmail && !cleanUsername) {
+        return res.status(400).json({ success: false, error: 'Email or username is required for cloud sync' });
       }
 
       // If Supabase credentials are configured in Vercel environment variables, persist directly to Supabase table
       if (supabaseUrl && supabaseKey) {
         try {
+          const payload = {
+            email: cleanEmail || cleanUsername,
+            username: cleanUsername,
+            user_data: user || { email: cleanEmail, username: cleanUsername },
+            cycles_data: cycles || [],
+            updated_at: new Date().toISOString()
+          };
+
           const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault`, {
             method: 'POST',
             headers: {
@@ -36,34 +45,39 @@ export default async function handler(req, res) {
               'Authorization': `Bearer ${supabaseKey}`,
               'Prefer': 'resolution=merge-duplicates'
             },
-            body: JSON.stringify({
-              email: cleanEmail,
-              user_data: user || {},
-              cycles_data: cycles || [],
-              updated_at: new Date().toISOString()
-            })
+            body: JSON.stringify(payload)
           });
+
           if (supaRes.ok) {
             return res.status(200).json({
               success: true,
               cloud: 'supabase',
               message: 'Cloud sync successful via Supabase PostgreSQL',
-              user,
-              cycles
+              user: payload.user_data,
+              cycles: payload.cycles_data
+            });
+          } else {
+            const errText = await supaRes.text().catch(() => '');
+            console.warn('Supabase post response error:', supaRes.status, errText);
+            return res.status(200).json({
+              success: false,
+              cloud: 'supabase',
+              error: `Supabase database error (${supaRes.status}): ${errText}. Please ensure the user_vault table exists.`
             });
           }
         } catch (supaErr) {
-          console.warn('Supabase sync fallback:', supaErr);
+          console.warn('Supabase sync exception:', supaErr);
+          return res.status(500).json({ success: false, error: supaErr.message });
         }
       }
 
-      // Universal Serverless JSON echo and acknowledgment
+      // Fallback response when Supabase is not yet configured in Vercel
       return res.status(200).json({
         success: true,
-        cloud: 'serverless-edge',
-        message: 'Account synced with cloud successfully',
+        cloud: 'unconfigured',
+        message: 'Local session saved. For cross-device sync, add SUPABASE_URL and SUPABASE_ANON_KEY to Vercel Environment Variables.',
         email: cleanEmail,
-        user: user || { email: cleanEmail, username: cleanEmail.split('@')[0] },
+        user: user || { email: cleanEmail, username: cleanUsername },
         cycles: cycles || [],
         total_cycles: (cycles || []).length,
         synced_at: new Date().toISOString()
@@ -78,9 +92,11 @@ export default async function handler(req, res) {
 
       if (supabaseUrl && supabaseKey) {
         try {
+          const encId = encodeURIComponent(identifier);
+          // Query by email OR by username in column or JSONB
           const filter = identifier.includes('@')
-            ? `email=eq.${encodeURIComponent(identifier)}`
-            : `or=(email.eq.${encodeURIComponent(identifier)},user_data->>username.eq.${encodeURIComponent(identifier)})`;
+            ? `email=eq.${encId}`
+            : `or=(email.eq.${encId},username.eq.${encId},user_data->>username.eq.${encId})`;
 
           const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault?${filter}&select=*`, {
             headers: {
@@ -88,6 +104,7 @@ export default async function handler(req, res) {
               'Authorization': `Bearer ${supabaseKey}`
             }
           });
+
           if (supaRes.ok) {
             const rows = await supaRes.json();
             if (rows && rows.length > 0) {
@@ -102,20 +119,27 @@ export default async function handler(req, res) {
               return res.status(200).json({
                 success: false,
                 notFound: true,
-                message: 'Account not found in cloud'
+                message: 'Account not found in cloud database'
               });
             }
+          } else {
+            const errText = await supaRes.text().catch(() => '');
+            console.warn('Supabase fetch error:', supaRes.status, errText);
+            return res.status(200).json({
+              success: false,
+              error: `Supabase query error (${supaRes.status}): ${errText}`
+            });
           }
         } catch (err) {
-          console.warn('Supabase fetch fallback:', err);
+          console.warn('Supabase fetch exception:', err);
+          return res.status(500).json({ success: false, error: err.message });
         }
       }
 
       return res.status(200).json({
-        success: true,
-        cloud: 'local-first',
-        message: 'Ready for client sync',
-        email: identifier
+        success: false,
+        notConfigured: true,
+        message: 'Cloud sync requires SUPABASE_URL and SUPABASE_ANON_KEY in Vercel environment variables.'
       });
     }
 
@@ -125,3 +149,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: error.message });
   }
 }
+
+module.exports = handler;
+module.exports.default = handler;
