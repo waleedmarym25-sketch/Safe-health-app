@@ -13,8 +13,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_KEY;
+  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  const rawKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_KEY || '';
+
+  const supabaseUrl = rawUrl.trim().replace(/\/+$/, '');
+  const supabaseKey = rawKey.trim();
 
   try {
     if (req.method === 'POST') {
@@ -37,13 +40,13 @@ export default async function handler(req, res) {
             updated_at: new Date().toISOString()
           };
 
-          const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault`, {
+          const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault?on_conflict=email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'apikey': supabaseKey,
               'Authorization': `Bearer ${supabaseKey}`,
-              'Prefer': 'resolution=merge-duplicates'
+              'Prefer': 'resolution=merge-duplicates,return=representation'
             },
             body: JSON.stringify(payload)
           });
@@ -62,7 +65,7 @@ export default async function handler(req, res) {
             return res.status(200).json({
               success: false,
               cloud: 'supabase',
-              error: `Supabase database error (${supaRes.status}): ${errText}. Please ensure the user_vault table exists.`
+              error: `Supabase database error (${supaRes.status}): ${errText}`
             });
           }
         } catch (supaErr) {
@@ -93,10 +96,9 @@ export default async function handler(req, res) {
       if (supabaseUrl && supabaseKey) {
         try {
           const encId = encodeURIComponent(identifier);
-          // Query by email OR by username in column or JSONB
           const filter = identifier.includes('@')
             ? `email=eq.${encId}`
-            : `or=(email.eq.${encId},username.eq.${encId},user_data->>username.eq.${encId})`;
+            : `or=(email.eq.${encId},username.eq.${encId})`;
 
           const supaRes = await fetch(`${supabaseUrl}/rest/v1/user_vault?${filter}&select=*`, {
             headers: {
@@ -149,3 +151,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: error.message });
   }
 }
+

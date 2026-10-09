@@ -3933,7 +3933,11 @@ class ManagerService {
     this.setUser(newUser);
 
     // Persist immediately to Cloud (Supabase)
-    this.syncToCloud(newUser, []).catch(e => console.warn('Background initial sync error:', e));
+    try {
+      await this.syncToCloud(newUser, []);
+    } catch (e) {
+      console.warn('Initial cloud sync notice:', e);
+    }
 
     return { success: true, token, user: newUser };
   }
