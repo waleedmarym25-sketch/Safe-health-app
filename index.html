@@ -6468,8 +6468,48 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             const userPill = document.getElementById('userPill');
             if (userPill) userPill.style.display = 'flex';
             updateUserBanner();
+            renderActiveUserChat();
             loadMyUserData();
             checkPrePeriodNotifications();
+        }
+
+        function renderActiveUserChat() {
+            const user = currentUser || managerService.getUser();
+            const username = user?.username || 'default';
+            const container = document.getElementById('chatMessages');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const name = user ? (user.display_name || user.username) : (currentLang === 'ar' ? 'يا جميلة' : 'Lovely');
+            const welcomeChatMsgs = {
+                ar: `مرحباً بكِ يا <strong>${name}</strong> يا جميلة! 💕<br>أنا مساعدتكِ وصديقتكِ الصحية. اسأليني عن أي مسكنات آمنة، نصائح للنزيف والتبويض، أو سجلي دورتكِ في أي وقت بكل حب.`,
+                en: `Hello <strong>${name}</strong>! 💕<br>I am your health companion. Feel free to ask about safe painkillers, flow intensity, or log your cycle details anytime!`,
+                fr: `Bonjour <strong>${name}</strong> ! 💕<br>Je suis votre assistante santé bienveillante. Posez-moi des questions sur les analgésiques, l'ovulation, ou enregistrez votre cycle avec amour.`,
+                de: `Hallo <strong>${name}</strong>! 💕<br>Ich bin deine einfühlsame Begleiterin. Frage mich nach sicheren Schmerzmitteln, Eisprung-Tipps oder trage deine Periode ein.`,
+                sw: `Habari <strong>${name}</strong>! 💕<br>Mimi ni msaidizi wako wa afya. Uliza kuhusu dawa salama za maumivu, upevushaji mayai, au rekodi hedhi yako kwa upendo.`
+            };
+
+            const welcomeBubble = document.createElement('div');
+            welcomeBubble.className = 'msg-bubble bot';
+            welcomeBubble.id = 'chatWelcomeMsg';
+            welcomeBubble.innerHTML = welcomeChatMsgs[currentLang] || welcomeChatMsgs['en'];
+            container.appendChild(welcomeBubble);
+
+            const history = managerService.getChatHistory(username);
+            if (history && history.length > 0) {
+                history.forEach(item => {
+                    const role = item.role === 'assistant' ? 'bot' : 'user';
+                    const bubble = document.createElement('div');
+                    bubble.className = `msg-bubble ${role}`;
+                    if (role === 'bot') {
+                        bubble.innerHTML = formatChatMarkdown(item.content);
+                    } else {
+                        bubble.innerText = item.content;
+                    }
+                    container.appendChild(bubble);
+                });
+            }
+            container.scrollTop = container.scrollHeight;
         }
 
         function updateUserBanner() {
@@ -6559,14 +6599,18 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                     const regBadge = document.getElementById('bannerRegularity');
                     const irregularCard = document.getElementById('irregularSupportCard');
 
-                    if (ana.is_regular) {
+                    if (ana.total_cycles === 0) {
+                        regBadge.innerText = currentLang === 'ar' ? 'حساب جديد' : 'New Account';
+                        regBadge.className = 'badge badge-primary';
+                        if (irregularCard) irregularCard.style.display = 'none';
+                    } else if (ana.is_regular) {
                         regBadge.innerText = ALL_LOCALES[currentLang]?.regularCycle || 'دورة منتظمة ومثالية';
                         regBadge.className = 'badge badge-gold';
-                        irregularCard.style.display = 'none';
+                        if (irregularCard) irregularCard.style.display = 'none';
                     } else {
                         regBadge.innerText = ALL_LOCALES[currentLang]?.variableCycle || 'تفاوت خفيف في طول الدورة';
                         regBadge.className = 'badge badge-primary';
-                        irregularCard.style.display = 'block';
+                        if (irregularCard) irregularCard.style.display = 'block';
                     }
 
                     document.getElementById('dashNextDate').innerText = ana.next_period_date || '—';
@@ -6584,41 +6628,45 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
 
                     // Mini table
                     const miniTbody = document.getElementById('dashMiniTableBody');
-                    if (ana.recent_cycles && ana.recent_cycles.length > 0) {
-                        miniTbody.innerHTML = '';
-                        const delLabel = ALL_LOCALES[currentLang]?.deleteBtn || 'حذف';
-                        ana.recent_cycles.forEach(c => {
-                            let details = [];
-                            if (c.pain_locations) details.push(`📍 ${c.pain_locations}`);
-                            if (c.ovulation_symptoms) details.push(`<span class="badge badge-gold">⭐ ${c.ovulation_symptoms}</span>`);
-                            if (c.symptoms) details.push(`📝 ${c.symptoms}`);
+                    if (miniTbody) {
+                        if (ana.recent_cycles && ana.recent_cycles.length > 0) {
+                            miniTbody.innerHTML = '';
+                            const delLabel = ALL_LOCALES[currentLang]?.deleteBtn || 'حذف';
+                            ana.recent_cycles.forEach(c => {
+                                let details = [];
+                                if (c.pain_locations) details.push(`📍 ${c.pain_locations}`);
+                                if (c.ovulation_symptoms) details.push(`<span class="badge badge-gold">⭐ ${c.ovulation_symptoms}</span>`);
+                                if (c.symptoms) details.push(`📝 ${c.symptoms}`);
 
-                            let cycleBadge = `<span class="badge badge-gold">${c.cycle_length} ${uDays}</span>`;
-                            if (c.cycle_length > 35) {
-                                cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر' : 'Delayed'})</span>`;
-                            } else if (c.cycle_length < 21) {
-                                cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'مبكرة' : 'Early'})</span>`;
-                            } else {
-                                cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${c.cycle_length} ${uDays}</span>`;
-                            }
+                                let cycleBadge = `<span class="badge badge-gold">${c.cycle_length} ${uDays}</span>`;
+                                if (c.cycle_length > 35) {
+                                    cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر' : 'Delayed'})</span>`;
+                                } else if (c.cycle_length < 21) {
+                                    cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${c.cycle_length} ${uDays} (${currentLang === 'ar' ? 'مبكرة' : 'Early'})</span>`;
+                                } else {
+                                    cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${c.cycle_length} ${uDays}</span>`;
+                                }
 
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td><span class="badge badge-primary">#${c.id}</span></td>
-                                <td>📅 ${c.last_period_date}</td>
-                                <td>${cycleBadge}</td>
-                                <td>${c.period_length} ${uDays}</td>
-                                <td>${c.flow_intensity || 'medium'}</td>
-                                <td>${c.pain_level ? `<span class="badge badge-primary">${c.pain_level}/10</span>` : '—'}</td>
-                                <td>${details.join(' | ') || '—'}</td>
-                                <td>
-                                    <button class="btn-delete" onclick="deleteMyCycleRecord(${c.id})" title="${delLabel}">
-                                        ${delLabel}
-                                    </button>
-                                </td>
-                            `;
-                            miniTbody.appendChild(tr);
-                        });
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td><span class="badge badge-primary">#${c.id}</span></td>
+                                    <td>📅 ${c.last_period_date}</td>
+                                    <td>${cycleBadge}</td>
+                                    <td>${c.period_length} ${uDays}</td>
+                                    <td>${c.flow_intensity || 'medium'}</td>
+                                    <td>${c.pain_level ? `<span class="badge badge-primary">${c.pain_level}/10</span>` : '—'}</td>
+                                    <td>${details.join(' | ') || '—'}</td>
+                                    <td>
+                                        <button class="btn-delete" onclick="deleteMyCycleRecord(${c.id})" title="${delLabel}">
+                                            ${delLabel}
+                                        </button>
+                                    </td>
+                                `;
+                                miniTbody.appendChild(tr);
+                            });
+                        } else {
+                            miniTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">${currentLang === 'ar' ? 'لا توجد دورات مسجلة بعد في هذا الحساب 💕' : 'No recorded cycles yet for this account 💕'}</td></tr>`;
+                        }
                     }
 
                     renderCalendar();
@@ -6627,48 +6675,52 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
                 // Full cycles history table
                 const cycData = await managerService.getCycles();
                 const userTbody = document.getElementById('userCyclesTableBody');
-                if (cycData.success && cycData.cycles && cycData.cycles.length > 0) {
-                    userTbody.innerHTML = '';
-                    const uDays = ALL_LOCALES[currentLang]?.days || 'أيام';
-                    const delLabel = ALL_LOCALES[currentLang]?.deleteBtn || 'حذف';
-                    cycData.cycles.forEach(item => {
-                        let details = [];
-                        if (item.pain_locations) details.push(`📍 ${item.pain_locations}`);
-                        if (item.ovulation_symptoms) details.push(`<span class="badge badge-gold" style="display:inline-block; margin-top:2px;">⭐ ${item.ovulation_symptoms}</span>`);
-                        if (item.symptoms) details.push(`📝 ${item.symptoms}`);
+                if (userTbody) {
+                    if (cycData.success && cycData.cycles && cycData.cycles.length > 0) {
+                        userTbody.innerHTML = '';
+                        const uDays = ALL_LOCALES[currentLang]?.days || 'أيام';
+                        const delLabel = ALL_LOCALES[currentLang]?.deleteBtn || 'حذف';
+                        cycData.cycles.forEach(item => {
+                            let details = [];
+                            if (item.pain_locations) details.push(`📍 ${item.pain_locations}`);
+                            if (item.ovulation_symptoms) details.push(`<span class="badge badge-gold" style="display:inline-block; margin-top:2px;">⭐ ${item.ovulation_symptoms}</span>`);
+                            if (item.symptoms) details.push(`📝 ${item.symptoms}`);
 
-                        let cycleBadge = `<span class="badge badge-gold">${item.cycle_length} ${uDays}</span>`;
-                        if (item.cycle_length > 35) {
-                            cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر ملحوظ' : 'Delayed'})</span>`;
-                        } else if (item.cycle_length < 21) {
-                            cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'أقصر من المعتاد' : 'Short'})</span>`;
-                        } else {
-                            cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'منتظمة' : 'Regular'})</span>`;
-                        }
+                            let cycleBadge = `<span class="badge badge-gold">${item.cycle_length} ${uDays}</span>`;
+                            if (item.cycle_length > 35) {
+                                cycleBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#d97706; border:1px solid #fde68a;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'تأخر ملحوظ' : 'Delayed'})</span>`;
+                            } else if (item.cycle_length < 21) {
+                                cycleBadge = `<span class="badge" style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #fca5a5;">⚠️ ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'أقصر من المعتاد' : 'Short'})</span>`;
+                            } else {
+                                cycleBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid #a7f3d0;">🟢 ${item.cycle_length} ${uDays} (${currentLang === 'ar' ? 'منتظمة' : 'Regular'})</span>`;
+                            }
 
-                        const intervalNote = item.matched_prev_date
-                            ? `<div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 3px;">⚡ ${currentLang === 'ar' ? 'فاصل عن دورة' : 'From'} ${item.matched_prev_date}</div>`
-                            : '';
+                            const intervalNote = item.matched_prev_date
+                                ? `<div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 3px;">⚡ ${currentLang === 'ar' ? 'فاصل عن دورة' : 'From'} ${item.matched_prev_date}</div>`
+                                : '';
 
-                        const tr = document.createElement('tr');
-                        const createdFormatted = item.created_at ? new Date(item.created_at).toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : '—';
-                        tr.innerHTML = `
-                            <td><span class="badge badge-primary">#${item.id}</span></td>
-                            <td>📅 <strong>${item.last_period_date}</strong></td>
-                            <td>${cycleBadge}${intervalNote}</td>
-                            <td>${item.period_length} ${uDays}</td>
-                            <td>${item.flow_intensity || 'medium'}</td>
-                            <td>${item.pain_level ? `<span class="badge badge-primary">${item.pain_level}/10</span>` : '—'}</td>
-                            <td>${details.join('<br>') || '—'}</td>
-                            <td style="color: var(--text-secondary); font-size: 0.78rem;">${createdFormatted}</td>
-                            <td>
-                                <button class="btn-delete" onclick="deleteMyCycleRecord(${item.id})">
-                                    ${delLabel}
-                                </button>
-                            </td>
-                        `;
-                        userTbody.appendChild(tr);
-                    });
+                            const tr = document.createElement('tr');
+                            const createdFormatted = item.created_at ? new Date(item.created_at).toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : '—';
+                            tr.innerHTML = `
+                                <td><span class="badge badge-primary">#${item.id}</span></td>
+                                <td>📅 <strong>${item.last_period_date}</strong></td>
+                                <td>${cycleBadge}${intervalNote}</td>
+                                <td>${item.period_length} ${uDays}</td>
+                                <td>${item.flow_intensity || 'medium'}</td>
+                                <td>${item.pain_level ? `<span class="badge badge-primary">${item.pain_level}/10</span>` : '—'}</td>
+                                <td>${details.join('<br>') || '—'}</td>
+                                <td style="color: var(--text-secondary); font-size: 0.78rem;">${createdFormatted}</td>
+                                <td>
+                                    <button class="btn-delete" onclick="deleteMyCycleRecord(${item.id})">
+                                        ${delLabel}
+                                    </button>
+                                </td>
+                            `;
+                            userTbody.appendChild(tr);
+                        });
+                    } else {
+                        userTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-secondary);">${currentLang === 'ar' ? 'لم تقومي بتسجيل أي دورات بعد في هذا الحساب. اضغطي على "تسجيل الدورة والنزيف" للبدء! 🌸' : 'No cycles recorded yet. Click "Log Period & Flow" to start! 🌸'}</td></tr>`;
+                    }
                 }
             } catch (err) {}
         };

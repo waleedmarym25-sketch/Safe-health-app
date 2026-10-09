@@ -1,5 +1,5 @@
 // SAFE Health - 100% Free Cross-Device Cloud Sync Serverless Endpoint
-async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -149,6 +149,3 @@ async function handler(req, res) {
     return res.status(500).json({ success: false, error: error.message });
   }
 }
-
-module.exports = handler;
-module.exports.default = handler;
