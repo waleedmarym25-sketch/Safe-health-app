@@ -4995,45 +4995,46 @@ class ManagerService {
           ? `أنتِ "سارة" (Sarah) 💕، رفيقة ذكية حنونة ومتخصصة في صحة المرأة والأنوثة والدعم النفسي لمنصة SAFE. تحدثي بلهجة دافئة مريحة وذكية كصديقة مقربة وطبيبة ناصحة في نفس الوقت. الاسم الحالي للمستخدمة: ${userDisplayName}. أجيبي عن أي موضوع يُطرح عليكِ برقي واهتمام واستخدمي التنسيق والإيموجي المناسب.`
           : `You are Sarah, an empathetic, highly intelligent AI health companion and supportive best friend for SAFE Platform. You speak with warmth, scientific accuracy, and deep empathy. The user's name is ${userDisplayName}.`;
 
-        let res = await fetch(activeUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${trimmedKey}`
-          },
-          body: JSON.stringify({
-            model: activeModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...updatedHistory.slice(-10)
-            ],
-            temperature: 0.7
-          })
-        });
+        const groqCandidates = isGroq ? [
+          activeModel,
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+          'llama3-8b-8192',
+          'llama3-70b-8192',
+          'gemma2-9b-it',
+          'mixtral-8x7b-32768'
+        ] : [activeModel];
+        const uniqueCands = [...new Set(groqCandidates.filter(Boolean))];
 
-        // Retry with llama-3.1-8b-instant if Groq returned 404
-        if (!res.ok && isGroq && activeModel !== 'llama-3.1-8b-instant') {
-          activeModel = 'llama-3.1-8b-instant';
-          res = await fetch(activeUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${trimmedKey}`
-            },
-            body: JSON.stringify({
-              model: 'llama-3.1-8b-instant',
-              messages: [
-                { role: 'system', content: systemPrompt },
-                ...updatedHistory.slice(-10)
-              ],
-              temperature: 0.7
-            })
-          });
-        }
+        let res = null;
+        for (const cand of uniqueCands) {
+          try {
+            res = await fetch(activeUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${trimmedKey}`
+              },
+              body: JSON.stringify({
+                model: cand,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  ...updatedHistory.slice(-10)
+                ],
+                temperature: 0.7
+              })
+            });
 
-        if (res.ok) {
-          const data = await res.json();
-          aiReply = data?.choices?.[0]?.message?.content;
+            if (res.ok) {
+              const data = await res.json();
+              aiReply = data?.choices?.[0]?.message?.content;
+              if (aiReply) break;
+            } else if (res.status !== 404 && res.status !== 400) {
+              break; // Not a model-not-found error
+            }
+          } catch (candErr) {
+            console.warn(`Cand ${cand} direct call failed:`, candErr);
+          }
         }
       } catch (e) {
         console.warn('Direct browser custom AI call failed:', e);
@@ -6907,35 +6908,67 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
             }
             if (btn) btn.disabled = true;
 
+            const isGroq = key.startsWith('gsk_') || url.includes('groq');
+            const candidateModels = isGroq ? [
+                model,
+                'llama-3.3-70b-versatile',
+                'llama-3.1-8b-instant',
+                'llama3-8b-8192',
+                'llama3-70b-8192',
+                'gemma2-9b-it',
+                'mixtral-8x7b-32768'
+            ] : [model];
+            const uniqueCands = [...new Set(candidateModels.filter(Boolean))];
+
+            let successModel = null;
+            let lastErrMsg = '';
+
             try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${key}`
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: [{ role: 'user', content: 'Say hello in one word' }],
-                        max_tokens: 10
-                    })
-                });
+                for (const cand of uniqueCands) {
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${key}`
+                            },
+                            body: JSON.stringify({
+                                model: cand,
+                                messages: [{ role: 'user', content: 'Hi' }],
+                                max_tokens: 5
+                            })
+                        });
+
+                        if (res.ok) {
+                            successModel = cand;
+                            break;
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            lastErrMsg = errData?.error?.message || `HTTP ${res.status}`;
+                            if (res.status !== 404 && res.status !== 400) {
+                                break; // Unauthorized or quota error
+                            }
+                        }
+                    } catch (candErr) {
+                        lastErrMsg = candErr.message;
+                    }
+                }
 
                 if (btn) btn.disabled = false;
 
-                if (res.ok) {
+                if (successModel) {
+                    const modelInput = document.getElementById('customApiModelInput');
+                    if (modelInput) modelInput.value = successModel;
                     if (statusMsg) {
                         statusMsg.style.background = 'rgba(16, 185, 129, 0.15)';
                         statusMsg.style.color = 'var(--success)';
-                        statusMsg.innerText = currentLang === 'ar' ? '✅ الاتصال ناجح ومفتاح الـ API يعمل بشكل ممتاز!' : '✅ Connected successfully! API Key is active.';
+                        statusMsg.innerText = currentLang === 'ar' ? `✅ الاتصال ناجح ومفتاح الـ API يعمل بشكل ممتاز! (النموذج النشط: ${successModel})` : `✅ Connected! Working model: ${successModel}`;
                     }
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    const errMsg = errData?.error?.message || `HTTP ${res.status}`;
                     if (statusMsg) {
                         statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
                         statusMsg.style.color = 'var(--danger)';
-                        statusMsg.innerText = (currentLang === 'ar' ? '❌ فشل الاتصال: ' : '❌ Connection failed: ') + errMsg;
+                        statusMsg.innerText = (currentLang === 'ar' ? '❌ فشل الاتصال: ' : '❌ Connection failed: ') + lastErrMsg;
                     }
                 }
             } catch (err) {

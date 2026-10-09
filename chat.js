@@ -58,17 +58,11 @@ async function handler(req, res) {
     const isOpenAI = !isGroq && !isOpenRouter;
 
     let apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    let model = 'llama-3.1-8b-instant';
+    let model = 'llama-3.3-70b-versatile';
 
     if (isGroq) {
       apiUrl = customUrl && customUrl.includes('groq') ? customUrl : 'https://api.groq.com/openai/v1/chat/completions';
-      // Sanitize model for Groq - ensure valid active Groq model
-      const requestedModel = (customModel || process.env.GROQ_MODEL || '').trim();
-      if (requestedModel && !requestedModel.startsWith('gpt-') && !requestedModel.includes('/') && !requestedModel.includes('versatile') && !requestedModel.includes('70b-versatile')) {
-        model = requestedModel;
-      } else {
-        model = 'llama-3.1-8b-instant';
-      }
+      model = (customModel || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').trim();
     } else if (isOpenRouter) {
       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
       model = customModel || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
@@ -124,47 +118,63 @@ async function handler(req, res) {
       { role: 'user', content: message }
     ];
 
-    let aiRes = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${rawKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: chatMessages,
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
+    // Build list of candidate models to try
+    let candidateModels = [model];
+    if (isGroq) {
+      candidateModels = [
+        model,
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'llama3-8b-8192',
+        'llama3-70b-8192',
+        'gemma2-9b-it',
+        'mixtral-8x7b-32768'
+      ];
+    }
+    candidateModels = [...new Set(candidateModels.filter(Boolean))];
 
-    // Auto-heal / fallback retry if provider returned 404/400 due to unsupported model
-    if (!aiRes.ok && isGroq && model !== 'llama-3.1-8b-instant') {
-      console.warn(`Groq returned status ${aiRes.status} for model ${model}, retrying with llama-3.1-8b-instant...`);
-      model = 'llama-3.1-8b-instant';
-      aiRes = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${rawKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: chatMessages,
-          temperature: 0.7,
-          max_tokens: 1000
-        })
-      });
+    let aiRes = null;
+    let chosenModel = model;
+    let lastErrorText = '';
+
+    for (const cand of candidateModels) {
+      chosenModel = cand;
+      try {
+        aiRes = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${rawKey}`
+          },
+          body: JSON.stringify({
+            model: cand,
+            messages: chatMessages,
+            temperature: 0.7,
+            max_tokens: 1000
+          })
+        });
+
+        if (aiRes.ok) {
+          break;
+        }
+
+        lastErrorText = await aiRes.text().catch(() => '');
+        // If error is not a 404 (model not found), e.g. 401 unauthorized, break immediately
+        if (aiRes.status !== 404 && !lastErrorText.includes('does not exist')) {
+          break;
+        }
+      } catch (err) {
+        lastErrorText = err.message;
+      }
     }
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => '');
-      console.error('AI provider error:', aiRes.status, errText);
+    if (!aiRes || !aiRes.ok) {
+      console.error('AI provider error:', aiRes?.status, lastErrorText);
       return res.status(200).json({
         success: false,
         configured: true,
         provider: isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI'),
-        error: `AI provider returned status ${aiRes.status}: ${errText}`
+        error: `AI provider returned status ${aiRes?.status || 500}: ${lastErrorText}`
       });
     }
 
@@ -179,7 +189,7 @@ async function handler(req, res) {
       success: true,
       configured: true,
       provider: isGroq ? 'Groq' : (isOpenRouter ? 'OpenRouter' : 'OpenAI'),
-      model: model,
+      model: chosenModel,
       reply: reply,
       ai_reply: reply
     });
