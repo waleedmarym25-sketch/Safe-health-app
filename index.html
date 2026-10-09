@@ -4971,12 +4971,17 @@ class ManagerService {
         const data = await res.json();
         if (data && data.success && (data.reply || data.ai_reply)) {
           aiReply = data.reply || data.ai_reply;
-        } else if (data && data.configured && data.error) {
+        } else if (data && data.error) {
           apiError = data.error;
           console.warn('AI Provider error from /api/chat:', data.error);
         }
+      } else {
+        const errText = await res.text().catch(() => '');
+        apiError = `HTTP ${res.status}: ${errText}`;
+        console.error('Serverless /api/chat HTTP failure:', res.status, errText);
       }
     } catch (e) {
+      apiError = `Network fetch error: ${e.message}`;
       console.warn('Serverless /api/chat fetch error:', e);
     }
 
