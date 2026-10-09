@@ -4358,7 +4358,8 @@ class ManagerService {
   getChatHistory(username) {
     if (typeof window === 'undefined' || !window.localStorage) return [];
     try {
-      const raw = localStorage.getItem(`safe_chat_history_${username || 'default'}`);
+      const cleanUser = String(username || 'default').trim().toLowerCase();
+      const raw = localStorage.getItem(`safe_chat_history_${cleanUser}`);
       return raw ? JSON.parse(raw) : [];
     } catch (e) {
       return [];
@@ -4368,15 +4369,17 @@ class ManagerService {
   saveChatHistory(username, history) {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
+      const cleanUser = String(username || 'default').trim().toLowerCase();
       const trimmed = (history || []).slice(-20);
-      localStorage.setItem(`safe_chat_history_${username || 'default'}`, JSON.stringify(trimmed));
+      localStorage.setItem(`safe_chat_history_${cleanUser}`, JSON.stringify(trimmed));
     } catch (e) {}
   }
 
   clearChatHistory(username) {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      localStorage.removeItem(`safe_chat_history_${username || 'default'}`);
+      const cleanUser = String(username || 'default').trim().toLowerCase();
+      localStorage.removeItem(`safe_chat_history_${cleanUser}`);
     } catch (e) {}
   }
 
@@ -6450,6 +6453,32 @@ if (typeof window !== 'undefined') { window.managerService = managerService; }
         window.logout = function() {
             managerService.clearAuth();
             currentUser = null;
+            userAnalyticsData = null;
+
+            // Clear auth form fields
+            const fields = ['loginIdentifier', 'loginPassword', 'regUsername', 'regDisplayName', 'regEmail', 'regPassword', 'regAge', 'regWeight', 'regHeight'];
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if (el) el.value = '';
+            });
+
+            // Reset UI components to clean state
+            const headerUserName = document.getElementById('headerUserName');
+            if (headerUserName) headerUserName.innerText = '';
+            const drawerUserName = document.getElementById('drawerUserName');
+            if (drawerUserName) drawerUserName.innerText = '';
+            const bannerWelcome = document.getElementById('bannerWelcomeText');
+            if (bannerWelcome) bannerWelcome.innerText = '';
+            const bannerUserStats = document.getElementById('bannerUserStats');
+            if (bannerUserStats) bannerUserStats.innerText = '';
+
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) chatMessages.innerHTML = '';
+            const miniTbody = document.getElementById('dashMiniTableBody');
+            if (miniTbody) miniTbody.innerHTML = '';
+            const userTbody = document.getElementById('userCyclesTableBody');
+            if (userTbody) userTbody.innerHTML = '';
+
             showAuthView();
         };
 
