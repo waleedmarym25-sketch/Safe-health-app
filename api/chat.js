@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Auto-detect Provider, URL, and Candidate Models
+    // 2. Auto-detect Provider and API Endpoint
     const isGemini = rawKey.startsWith('AIzaSy') || Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) || (customUrl && customUrl.includes('generativelanguage.googleapis.com'));
     const isGroq = !isGemini && (rawKey.startsWith('gsk_') || Boolean(process.env.GROQ_API_KEY || process.env.GROQ_KEY) || (customUrl && customUrl.includes('groq')));
     const isOpenRouter = !isGemini && !isGroq && (rawKey.startsWith('sk-or-') || (customUrl && customUrl.includes('openrouter.ai')));
@@ -70,20 +70,42 @@ export default async function handler(req, res) {
         customModel,
         'gemini-2.5-flash',
         'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        'gemini-1.5-flash'
       ];
     } else if (isGroq) {
       apiUrl = customUrl && customUrl.includes('groq') ? customUrl : 'https://api.groq.com/openai/v1/chat/completions';
-      candidateModels = [
-        customModel,
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'llama3-8b-8192',
-        'llama3-70b-8192',
-        'gemma2-9b-it',
-        'mixtral-8x7b-32768'
-      ];
+      
+      // Dynamically query active Groq models for this key to guarantee 100% active non-decommissioned model
+      try {
+        const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { 'Authorization': `Bearer ${rawKey}` }
+        });
+        if (modelsRes.ok) {
+          const modelsData = await modelsRes.json();
+          if (modelsData && Array.isArray(modelsData.data)) {
+            const activeChatModels = modelsData.data
+              .map(m => m.id)
+              .filter(id => !id.includes('whisper') && !id.includes('guard') && !id.includes('embed') && !id.includes('reranker'));
+            
+            if (activeChatModels.length > 0) {
+              candidateModels = activeChatModels;
+            }
+          }
+        }
+      } catch (modErr) {
+        console.warn('Groq dynamic models fetch fallback:', modErr);
+      }
+
+      if (candidateModels.length === 0) {
+        candidateModels = [
+          customModel,
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+          'qwen/qwen3-32b',
+          'qwen/qwen3.8-27b',
+          'gemma2-9b-it'
+        ];
+      }
     } else if (isOpenRouter) {
       apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
       candidateModels = [
@@ -172,8 +194,8 @@ export default async function handler(req, res) {
         }
 
         lastErrorText = await aiRes.text().catch(() => '');
-        // If error is not a 404/400 (model not found), e.g. 401 unauthorized, stop trying other models
-        if (aiRes.status !== 404 && aiRes.status !== 400 && !lastErrorText.includes('does not exist')) {
+        // If error is not a 404/400 model issue, e.g. 401 unauthorized, break
+        if (aiRes.status !== 404 && aiRes.status !== 400) {
           break;
         }
       } catch (err) {
